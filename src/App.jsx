@@ -9,6 +9,7 @@ import Nickname from './Pages/Nickname';
 import Walk from './Pages/Walk';
 import Record from './Pages/Record';
 import Dogam from './Pages/Dogam';
+import Dongne from './Pages/Dongne';
 
 const App = () => {
   return (
@@ -23,6 +24,7 @@ const App = () => {
             <Route path="/walk" element={<Walk />} />
             <Route path="/record" element={<Record />} />
             <Route path="/dogam" element={<Dogam />} />
+            <Route path="/dongne" element={<Dongne />} />
         </Routes>
     </Router>
   );
