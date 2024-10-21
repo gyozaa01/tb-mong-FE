@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import styled from 'styled-components';
-import { useNavigate } from 'react-router-dom';
 
 const WRAPPER_WIDTH = '375px';
 
@@ -67,8 +66,6 @@ const GreenBox = styled.div`
 `;
 
 const Start = () => {
-    const navigate = useNavigate();
-
     useEffect(() => {
         const kakaoKey = process.env.REACT_APP_KAKAO_JS_KEY;
         if (window.Kakao && !window.Kakao.isInitialized()) {
@@ -78,7 +75,15 @@ const Start = () => {
     }, []);
 
     const handleKakaoLogin = () => {
-        navigate('/dongne-setting'); // 로그인 시 동네 설정 페이지로 이동
+        const redirect_uri = 'http://localhost:3000/auth'; // 인증 후 리디렉트될 URI
+
+        if (window.Kakao && window.Kakao.Auth) {
+            window.Kakao.Auth.authorize({
+                redirectUri: redirect_uri, // 카카오 로그인 성공 후 리디렉트 URI
+            });
+        } else {
+            console.log('Kakao Auth 객체를 사용할 수 없습니다.');
+        }
     };
 
     return (

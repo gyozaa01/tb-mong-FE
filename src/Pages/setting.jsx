@@ -71,22 +71,32 @@ const Setting = () => {
 
     useEffect(() => {
         const kakaoKey = process.env.REACT_APP_KAKAO_JS_KEY;
-        if (window.Kakao && !window.Kakao.isInitialized()) {
-            window.Kakao.init(kakaoKey);
-            console.log('카카오 SDK 초기화 완료');
+
+        // Kakao SDK 초기화 확인 로그 추가
+        if (window.Kakao) {
+            if (!window.Kakao.isInitialized()) {
+                window.Kakao.init(kakaoKey);
+                console.log('카카오 SDK 초기화 완료');
+            } else {
+                console.log('카카오 SDK 이미 초기화됨');
+            }
+        } else {
+            console.log('Kakao 객체를 찾을 수 없습니다. SDK가 로드되지 않았을 수 있습니다.');
         }
     }, []);
 
     const handleLogout = () => {
-        if (window.Kakao.Auth) {
-            window.Kakao.Auth.logout(() => {
-                console.log('카카오 로그아웃 완료');
-
-                // 로그아웃 후 로그인 페이지로 이동
-                navigate('/');
-            });
+        if (window.Kakao && window.Kakao.Auth) {
+            if (window.Kakao.Auth.getAccessToken()) {
+                window.Kakao.Auth.logout(() => {
+                    console.log('카카오 로그아웃 완료');
+                    navigate('/');
+                });
+            } else {
+                console.log('로그인된 사용자가 없습니다.');
+            }
         } else {
-            console.log('카카오 Auth를 사용할 수 없습니다.');
+            console.log('카카오 Auth를 사용할 수 없습니다. Kakao SDK가 초기화되지 않았거나 로드되지 않았을 수 있습니다.');
         }
     };
 
