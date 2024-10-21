@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Header from '../Components/Header';
 /*global kakao*/
@@ -7,7 +8,8 @@ const WRAPPER_WIDTH = '375px';
 
 const Walk = () => {
     const [currentLocation, setCurrentLocation] = useState({ lat: 37.5665, lng: 126.9780 });
-    const [startLocation, setStartLocation] = useState(null); // 산책 시작 시점의 위치 저장
+    const [startLocation, setStartLocation] = useState(null);
+    const [startLocationName, setStartLocationName] = useState("위치 확인 중...");
     const [distance, setDistance] = useState(0.0);
     const [time, setTime] = useState(0);
     const [isWalking, setIsWalking] = useState(false);
@@ -19,6 +21,8 @@ const Walk = () => {
     const markerInstance = useRef(null);
     const polylineInstance = useRef(null);
     const watchId = useRef(null);
+    const pathPoints = useRef([]);
+    const navigate = useNavigate();
 
     // 거리 계산 함수
     const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -62,6 +66,19 @@ const Walk = () => {
         polylineInstance.current.setMap(mapInstance.current);
     }, [currentLocation]);
 
+    // 좌표를 주소로 변환하는 함수
+    const getAddressFromCoords = (lat, lng) => {
+        const geocoder = new kakao.maps.services.Geocoder();
+        const coord = new kakao.maps.LatLng(lat, lng);
+        const callback = (result, status) => {
+            if (status === kakao.maps.services.Status.OK) {
+                const dongName = result[0].address.region_3depth_name; // 동 이름 추출
+                setStartLocationName(dongName); // 동 이름 상태로 저장
+            }
+        };
+        geocoder.coord2Address(coord.getLng(), coord.getLat(), callback);
+    };
+
     const getLocationUpdates = () => {
         if (navigator.geolocation) {
             watchId.current = navigator.geolocation.watchPosition(
@@ -77,8 +94,8 @@ const Walk = () => {
                     );
 
                     if (!startLocation) {
-                        // 산책을 처음 시작할 때 위치 저장
                         setStartLocation({ lat: latitude, lng: longitude });
+                        getAddressFromCoords(latitude, longitude); // 좌표에서 동 이름 추출
                     }
 
                     if (isWalking) {
@@ -88,6 +105,9 @@ const Walk = () => {
                         const path = polylineInstance.current.getPath();
                         path.push(newPoint);
                         polylineInstance.current.setPath(path);
+
+                        // 경로 점 저장
+                        pathPoints.current.push({ lat: latitude, lng: longitude });
                     }
 
                     if (mapInstance.current && markerInstance.current) {
@@ -117,6 +137,48 @@ const Walk = () => {
         }
     };
 
+    const drawPathOnCanvas = (path) => {
+        const CANVAS_SIZE = 480;
+        const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
+        let [minLat, maxLat, minLng, maxLng] = [Infinity, -Infinity, Infinity, -Infinity];
+
+        path.forEach(p => {
+            minLat = Math.min(minLat, p.lat);
+            maxLat = Math.max(maxLat, p.lat);
+            minLng = Math.min(minLng, p.lng);
+            maxLng = Math.max(maxLng, p.lng);
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
+
+        const context = canvas.getContext("2d");
+        const scaleX = (canvas.width - CANVAS_OFFSET * 2) / (maxLng - minLng);
+        const scaleY = (canvas.height - CANVAS_OFFSET * 1.5) / (maxLat - minLat);
+
+        context.fillStyle = "#F0F0F0";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        context.strokeStyle = "#FF0000";
+        context.lineWidth = 5;
+        context.beginPath();
+
+        path.forEach((point, index) => {
+            const x = CANVAS_OFFSET + (point.lng - minLng) * scaleX;
+            const y = canvas.height - CANVAS_OFFSET - (point.lat - minLat) * scaleY;
+
+            if (index === 0) {
+                context.moveTo(x, y);
+            } else {
+                context.lineTo(x, y);
+            }
+        });
+
+        context.stroke();
+        return canvas.toDataURL();
+    };
+
     const handleStartStopWalk = () => {
         if (!isWalking) {
             setIsWalking(true);
@@ -132,11 +194,15 @@ const Walk = () => {
     const handleConfirmStopWalk = () => {
         setIsEndingWalk(false);
         setIsSavingWalk(true);
-        setPolylineImageUrl('/path_to_generated_polyline_image.png'); // 예시 이미지 경로 적용
+
+        // 캔버스에 경로 그리기
+        const polylineImage = drawPathOnCanvas(pathPoints.current);
+        setPolylineImageUrl(polylineImage); 
     };
 
     const handleSaveWalk = () => {
         console.log("산책 저장 완료!");
+        navigate("/record");  // 저장 후 record로 이동
     };
 
     useEffect(() => {
@@ -173,6 +239,15 @@ const Walk = () => {
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
+    const formatPace = () => {
+        if (distance === 0) {
+            return "N/A";  // 거리가 0일 때는 계산하지 않음
+        } else {
+            const pace = (time / distance).toFixed(2);  // 시간(초) / 거리(킬로미터) -> 분/km 페이스
+            return `${pace} 분/km`; 
+        }
+    };    
+
     return (
         <Container>
             <AppWrapper>
@@ -202,19 +277,19 @@ const Walk = () => {
                 {isEndingWalk && (
                     <InfoBoxExpanded>
                         <Title>산책을 종료하시겠습니까?</Title>
-                        <StopButton onClick={handleConfirmStopWalk}>
+                        <BigStopButton onClick={handleConfirmStopWalk}>
                             <img src="/stop.png" alt="Stop" />
-                        </StopButton>
+                        </BigStopButton>
                     </InfoBoxExpanded>
                 )}
 
                 {isSavingWalk && (
-                    <InfoBoxExpanded>
+                    <InfoBoxExpanded2>
                         <WalkDetails>
                             <StyledInputField placeholder="산책명을 입력하세요" />
                             <LocationBox>
                                 <img src="/location.png" alt="Location" />
-                                <LocationName>{startLocation ? "우산동" : "위치 확인 중..."}</LocationName>
+                                <LocationName>{startLocationName}</LocationName>
                             </LocationBox>
                             {polylineImageUrl ? (
                                 <MapImage src={polylineImageUrl} alt="Polyline 경로" />
@@ -238,7 +313,7 @@ const Walk = () => {
                                         <StatLabel>시속</StatLabel>
                                     </StatItem>
                                     <StatItem>
-                                        <StatValue>{(time / distance).toFixed(2)}</StatValue>
+                                        <StatValue>{formatPace()}</StatValue>
                                         <StatLabel>평균 페이스</StatLabel>
                                     </StatItem>
                                 </Stats>
@@ -247,7 +322,7 @@ const Walk = () => {
                                 <img src="/save.png" alt="Save" />
                             </SaveButton>
                         </WalkDetails>
-                    </InfoBoxExpanded>
+                    </InfoBoxExpanded2>
                 )}
             </AppWrapper>
         </Container>
@@ -292,11 +367,25 @@ const InfoBox = styled.div`
 
 const InfoBoxExpanded = styled(InfoBox)`
     flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 `;
 
 const Title = styled.h2`
     font-size: 24px;
     margin-bottom: 20px;
+`;
+
+const BigStopButton = styled.button`
+    background: none;
+    border: none;
+    cursor: pointer;
+    img {
+        width: 200px;
+        height: auto;
+    }
 `;
 
 const StopButton = styled.button`
@@ -309,15 +398,20 @@ const StopButton = styled.button`
     }
 `;
 
+const InfoBoxExpanded2 = styled(InfoBox)`
+    flex-grow: 1;
+`;
+
 const WalkDetails = styled.div`
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: space-between;
+    width: 100%;
 `;
 
 const StyledInputField = styled.input`
     color: black;
-    width: 80%;
+    width: 90%;
     padding: 12px;
     margin-bottom: 20px;
     font-size: 18px;
@@ -329,7 +423,8 @@ const StyledInputField = styled.input`
 const LocationBox = styled.div`
     display: flex;
     align-items: center;
-    margin-bottom: 20px;
+    justify-content: flex-start;
+    width: 90%;
 `;
 
 const LocationName = styled.p`
@@ -373,13 +468,15 @@ const StatLabel = styled.p`
 `;
 
 const SaveButton = styled.button`
-    background: none;
-    border: none;
-    cursor: pointer;
-    img {
-        width: 100px;
-        height: auto;
-    }
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  right: 8px;
+  bottom: 20px;
+  img {
+    width: 120px;
+  }
 `;
 
 export default Walk;
