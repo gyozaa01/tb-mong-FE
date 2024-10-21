@@ -75,7 +75,7 @@ const Start = () => {
     }, []);
 
     const handleKakaoLogin = () => {
-        const redirect_uri = 'http://localhost:3000/auth'; // 인증 후 리디렉트될 URI
+        const redirect_uri = 'http://localhost:3000/dongne-setting'; // 인증 후 리디렉트될 URI
 
         if (window.Kakao && window.Kakao.Auth) {
             window.Kakao.Auth.authorize({
