@@ -6,8 +6,10 @@ const Auth = () => {
 
   useEffect(() => {
     const params = new URL(window.location.href).searchParams;
-    const code = params.get('code'); // URL에서 인가 코드 추출
+    const code = params.get('code');
     const error = params.get('error');
+
+    console.log('인가 코드:', code); // 인가 코드 확인
 
     if (code) {
       // 인가 코드로 액세스 토큰 요청
@@ -23,11 +25,17 @@ const Auth = () => {
           code: code, // 인가 코드
         }),
       })
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            console.error(`토큰 요청 실패, 상태 코드: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
         .then(data => {
-          console.log('카카오 액세스 토큰:', data.access_token);
+          console.log('카카오 응답 데이터:', data); // 응답 전체를 출력
+          console.log('카카오 액세스 토큰:', data.access_token); // 액세스 토큰 확인
           if (data.access_token) {
-            // 액세스 토큰 발급 성공 시 동네 설정 페이지로 이동
             navigate('/dongne-setting');
           }
         })
