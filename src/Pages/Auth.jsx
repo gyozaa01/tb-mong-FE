@@ -19,7 +19,7 @@ const Auth = () => {
         body: new URLSearchParams({
           grant_type: 'authorization_code',
           client_id: process.env.REACT_APP_KAKAO_REST_API_KEY, // REST API 키 사용
-          redirect_uri: 'http://localhost:3000/auth', // 리디렉트 URI (Auth 페이지)
+          redirect_uri: 'https://tb-mong-fe.vercel.app/auth', // 리디렉트 URI (Auth 페이지)
           code: code, // 인가 코드
         }),
       })
