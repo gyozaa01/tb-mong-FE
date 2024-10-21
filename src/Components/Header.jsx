@@ -42,8 +42,8 @@ const Header = () => {
     return (
         <HeaderWrapper>
             <LogoContainer>
-                <LogoImage src="/logo.png" alt="뚜벅몽 로고" />
-                <Title>뚜벅몽</Title>
+                <LogoImage src="/logo.png" alt="뚜벅몽 로고"/>
+                <Title onClick={() => navigate('/home')} >뚜벅몽</Title>
             </LogoContainer>
             <DogamIcon src="/dogam.png" alt="도감 아이콘" onClick={() => navigate('/dogam')} />
         </HeaderWrapper>
