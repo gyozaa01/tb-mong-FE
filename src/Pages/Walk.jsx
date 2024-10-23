@@ -354,6 +354,7 @@ const Container = styled.div`
 const AppWrapper = styled.div`
     width: ${WRAPPER_WIDTH};
     max-width: ${WRAPPER_WIDTH};
+    padding: 20px;
     height: 100vh;
     background-color: #A7D2FF;
     display: flex;
