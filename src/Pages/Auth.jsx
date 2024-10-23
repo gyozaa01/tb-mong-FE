@@ -33,6 +33,9 @@ const Auth = () => {
           if (data.access_token) {
             console.log('액세스 토큰:', data.access_token);
 
+            // 액세스 토큰을 sessionStorage에 저장
+            sessionStorage.setItem('kakao_access_token', data.access_token);
+
             navigate('/dongne-setting'); // 토큰 발급 후 리다이렉트
           } else {
             console.error('카카오 API 오류:', data);
