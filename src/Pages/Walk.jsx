@@ -347,7 +347,6 @@ const Container = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    width: calc(100% + 40px);  // 패딩 20px을 더해 크기를 확장
     height: 100vh;
     background-color: #FEFEFE;
 `;
