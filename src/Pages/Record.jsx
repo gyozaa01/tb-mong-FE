@@ -220,6 +220,7 @@ const AppWrapper = styled.div`
 const ScrollWrapper = styled.div`
   flex-grow: 1;
   width: 100%;
+  overflow-x: hidden;
   overflow-y: auto;
   padding-bottom: 100px;
 `;
