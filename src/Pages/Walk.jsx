@@ -94,22 +94,22 @@ const Walk = () => {
     
                         const newPoint = new kakao.maps.LatLng(latitude, longitude);
 
-                        // 이전 Polyline 제거 (필요 시)
-                        if (polylineInstance.current) {
-                            polylineInstance.current.setMap(null);
+                        // Polyline이 존재하지 않는 경우 새로운 Polyline 생성
+                        if (!polylineInstance.current) {
+                            polylineInstance.current = new kakao.maps.Polyline({
+                                map: mapInstance.current,
+                                path: [newPoint], // 새 Polyline 시작
+                                strokeWeight: 5,
+                                strokeColor: "#FF0000",
+                                strokeOpacity: 0.7,
+                                strokeStyle: "solid",
+                            });
+                        } else {
+                            // Polyline이 이미 존재하는 경우 기존 경로에 새 좌표 추가
+                            const path = polylineInstance.current.getPath();
+                            path.push(newPoint);
+                            polylineInstance.current.setPath(path);
                         }
-
-                        // 새로운 Polyline 생성 및 설정
-                        polylineInstance.current = new kakao.maps.Polyline({
-                            map: mapInstance.current,
-                            path: [...polylineInstance.current.getPath(), newPoint], // 기존 경로에 새 좌표 추가
-                            strokeWeight: 5,
-                            strokeColor: "#FF0000",
-                            strokeOpacity: 0.7,
-                            strokeStyle: "solid",
-                        });
-
-                        polylineInstance.current.setMap(mapInstance.current); // 지도에 Polyline 추가
 
                         // 지도 중심을 새로운 위치로 이동
                         mapInstance.current.setCenter(newPoint);
@@ -136,13 +136,32 @@ const Walk = () => {
                 }
             );
         }
-    };    
+    };
 
     const removeLocationUpdates = () => {
         if (watchId.current != null) {
             navigator.geolocation.clearWatch(watchId.current);
             watchId.current = null;
         }
+    };
+
+    const handleStartStopWalk = () => {
+        if (!isWalking) {
+            setIsWalking(true);
+            getLocationUpdates();
+            setTime(0);
+        } else {
+            setIsWalking(false);
+            removeLocationUpdates();
+            setIsEndingWalk(true);
+        }
+    };
+
+    const handleConfirmStopWalk = () => {
+        setIsEndingWalk(false);
+        setIsSavingWalk(true);
+        const polylineImage = drawPathOnCanvas(pathPoints.current);
+        setPolylineImageUrl(polylineImage);
     };
 
     // Polyline을 캔버스로 변환해 저장하는 함수
@@ -178,10 +197,8 @@ const Walk = () => {
         context.beginPath();
 
         path.forEach((point, index) => {
-            // 경로 좌표를 캔버스 좌표로 변환
             const x = CANVAS_OFFSET + (point.lng - minLng) * scaleX;
             const y = canvas.height - CANVAS_OFFSET - (point.lat - minLat) * scaleY;
-
             if (index === 0) {
                 context.moveTo(x, y); // 시작점 이동
             } else {
@@ -191,27 +208,6 @@ const Walk = () => {
 
         context.stroke(); // 경로 그리기 완료
         return canvas.toDataURL(); // 경로를 이미지 데이터로 변환
-    };
-
-    const handleStartStopWalk = () => {
-        if (!isWalking) {
-            setIsWalking(true);
-            getLocationUpdates();
-            setTime(0);
-        } else {
-            setIsWalking(false);
-            removeLocationUpdates();
-            setIsEndingWalk(true);
-        }
-    };
-
-    const handleConfirmStopWalk = () => {
-        setIsEndingWalk(false);
-        setIsSavingWalk(true);
-
-        // 캔버스에 경로 그리기
-        const polylineImage = drawPathOnCanvas(pathPoints.current);
-        setPolylineImageUrl(polylineImage); 
     };
 
     const handleSaveWalk = () => {
@@ -324,7 +320,7 @@ const Walk = () => {
                                 <Stats>
                                     <StatItem>
                                         <StatValue>{(distance / (time / 3600)).toFixed(2)}</StatValue>
-                                        <StatLabel>시속속</StatLabel>
+                                        <StatLabel>시속</StatLabel>
                                     </StatItem>
                                     <StatItem>
                                         <StatValue>{formatPace()}</StatValue>
