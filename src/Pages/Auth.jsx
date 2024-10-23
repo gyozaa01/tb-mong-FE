@@ -10,11 +10,7 @@ const Auth = () => {
     const error = params.get('error'); // 에러 여부 확인
   
     if (code) {
-      // 액세스 토큰을 요청하는 URL
       const tokenUrl = 'https://kauth.kakao.com/oauth/token';
-      
-      // CORS 프록시 사용 (브라우저의 CORS 제한을 우회하기 위한 임시 방법)
-      const proxyUrl = 'https://cors-anywhere.herokuapp.com/'; // 임시 프록시
 
       const bodyData = new URLSearchParams({
         grant_type: 'authorization_code',
@@ -25,8 +21,7 @@ const Auth = () => {
 
       console.log('보낼 body 데이터:', bodyData.toString());
 
-      // 요청 보내기
-      fetch(`${proxyUrl}${tokenUrl}`, {
+      fetch(tokenUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
