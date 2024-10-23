@@ -347,6 +347,7 @@ const Container = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
+    width: calc(100% + 40px);  // 패딩 20px을 더해 크기를 확장
     height: 100vh;
     background-color: #FEFEFE;
 `;
@@ -354,7 +355,6 @@ const Container = styled.div`
 const AppWrapper = styled.div`
     width: ${WRAPPER_WIDTH};
     max-width: ${WRAPPER_WIDTH};
-    padding: 20px;
     height: 100vh;
     background-color: #A7D2FF;
     display: flex;
