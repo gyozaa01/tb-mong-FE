@@ -324,7 +324,7 @@ const Walk = () => {
                                 <Stats>
                                     <StatItem>
                                         <StatValue>{(distance / (time / 3600)).toFixed(2)}</StatValue>
-                                        <StatLabel>시속</StatLabel>
+                                        <StatLabel>시속속</StatLabel>
                                     </StatItem>
                                     <StatItem>
                                         <StatValue>{formatPace()}</StatValue>
