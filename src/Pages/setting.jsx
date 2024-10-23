@@ -82,13 +82,15 @@ const Setting = () => {
                 console.log('카카오 SDK 이미 초기화됨');
             }
 
-            // 로그인 상태 확인
-            if (window.Kakao.Auth && window.Kakao.Auth.getAccessToken()) {
-                setIsLoggedIn(true); // 액세스 토큰이 있으면 로그인 상태로 판단
-                console.log('사용자는 로그인된 상태입니다.');
+            // sessionStorage에서 액세스 토큰 가져와 SDK에 설정
+            const storedToken = sessionStorage.getItem('kakao_access_token');
+            if (storedToken) {
+                window.Kakao.Auth.setAccessToken(storedToken); // SDK에 액세스 토큰 설정
+                setIsLoggedIn(true); // 로그인 상태로 설정
+                console.log('세션 스토리지에서 액세스 토큰을 불러와 로그인된 상태입니다.');
             } else {
-                setIsLoggedIn(false); // 액세스 토큰이 없으면 로그아웃 상태로 판단
                 console.log('로그인된 사용자가 없습니다.');
+                setIsLoggedIn(false);
             }
         } else {
             console.log('Kakao 객체를 찾을 수 없습니다. SDK가 로드되지 않았을 수 있습니다.');
@@ -99,6 +101,7 @@ const Setting = () => {
         if (isLoggedIn) {
             window.Kakao.Auth.logout(() => {
                 console.log('카카오 로그아웃 완료');
+                sessionStorage.removeItem('kakao_access_token'); // 로그아웃 시 토큰 제거
                 navigate('/');
             });
         } else {
