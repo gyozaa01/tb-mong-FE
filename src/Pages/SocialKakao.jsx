@@ -1,7 +1,6 @@
 import React from 'react';
 
 const SocialKakao = () => {
-  // REST API 키를 환경 변수에서 가져옴
   const restApiKey = process.env.REACT_APP_KAKAO_REST_API_KEY;
 
   // 로컬과 배포 환경에 따라 redirect_uri를 설정
