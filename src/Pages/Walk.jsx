@@ -55,15 +55,6 @@ const Walk = () => {
             image: markerImage,
         });
         markerInstance.current.setMap(mapInstance.current);
-
-        polylineInstance.current = new kakao.maps.Polyline({
-            path: [markerPosition],
-            strokeWeight: 5,
-            strokeColor: '#FF0000',
-            strokeOpacity: 0.8,
-            strokeStyle: 'solid',
-        });
-        polylineInstance.current.setMap(mapInstance.current);
     }, [currentLocation]);
 
     // 좌표를 주소로 변환하는 함수
@@ -85,37 +76,54 @@ const Walk = () => {
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const newLocation = { lat: latitude, lng: longitude };
-
+                    
                     const dist = calculateDistance(
                         previousLocation.current.lat,
                         previousLocation.current.lng,
                         latitude,
                         longitude
                     );
-
+    
                     if (!startLocation) {
                         setStartLocation({ lat: latitude, lng: longitude });
                         getAddressFromCoords(latitude, longitude); // 좌표에서 동 이름 추출
                     }
-
+    
                     if (isWalking) {
                         setDistance((prevDist) => prevDist + dist);
-
+    
                         const newPoint = new kakao.maps.LatLng(latitude, longitude);
-                        const path = polylineInstance.current.getPath();
-                        path.push(newPoint);
-                        polylineInstance.current.setPath(path);
+
+                        // 이전 Polyline 제거 (필요 시)
+                        if (polylineInstance.current) {
+                            polylineInstance.current.setMap(null);
+                        }
+
+                        // 새로운 Polyline 생성 및 설정
+                        polylineInstance.current = new kakao.maps.Polyline({
+                            map: mapInstance.current,
+                            path: [...polylineInstance.current.getPath(), newPoint], // 기존 경로에 새 좌표 추가
+                            strokeWeight: 5,
+                            strokeColor: "#FF0000",
+                            strokeOpacity: 0.7,
+                            strokeStyle: "solid",
+                        });
+
+                        polylineInstance.current.setMap(mapInstance.current); // 지도에 Polyline 추가
+
+                        // 지도 중심을 새로운 위치로 이동
+                        mapInstance.current.setCenter(newPoint);
 
                         // 경로 점 저장
                         pathPoints.current.push({ lat: latitude, lng: longitude });
                     }
-
+    
                     if (mapInstance.current && markerInstance.current) {
                         const newCenter = new kakao.maps.LatLng(latitude, longitude);
                         mapInstance.current.setCenter(newCenter);
                         markerInstance.current.setPosition(newCenter);
                     }
-
+    
                     setCurrentLocation(newLocation);
                     previousLocation.current = newLocation;
                 },
@@ -128,7 +136,7 @@ const Walk = () => {
                 }
             );
         }
-    };
+    };    
 
     const removeLocationUpdates = () => {
         if (watchId.current != null) {
@@ -137,46 +145,52 @@ const Walk = () => {
         }
     };
 
+    // Polyline을 캔버스로 변환해 저장하는 함수
     const drawPathOnCanvas = (path) => {
-        const CANVAS_SIZE = 480;
-        const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
+        const CANVAS_SIZE = 480; // 캔버스 크기
+        const CANVAS_OFFSET = CANVAS_SIZE * 0.1; // 경계 여백
         let [minLat, maxLat, minLng, maxLng] = [Infinity, -Infinity, Infinity, -Infinity];
-
+    
+        // 경로의 최소/최대 위도 및 경도 계산
         path.forEach(p => {
             minLat = Math.min(minLat, p.lat);
             maxLat = Math.max(maxLat, p.lat);
             minLng = Math.min(minLng, p.lng);
             maxLng = Math.max(maxLng, p.lng);
         });
-
+    
         const canvas = document.createElement("canvas");
         canvas.width = CANVAS_SIZE;
         canvas.height = CANVAS_SIZE;
-
         const context = canvas.getContext("2d");
-        const scaleX = (canvas.width - CANVAS_OFFSET * 2) / (maxLng - minLng);
-        const scaleY = (canvas.height - CANVAS_OFFSET * 1.5) / (maxLat - minLat);
 
+        // 경로 점들을 캔버스 크기에 맞게 스케일 조정
+        const scaleX = (canvas.width - CANVAS_OFFSET * 2) / (maxLng - minLng);
+        const scaleY = (canvas.height - CANVAS_OFFSET * 2) / (maxLat - minLat);
+
+        // 캔버스 배경 색상
         context.fillStyle = "#F0F0F0";
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        context.strokeStyle = "#FF0000";
-        context.lineWidth = 5;
+        // 경로 선 설정
+        context.strokeStyle = "#FF0000"; // 경로 색상
+        context.lineWidth = 5; // 경로 두께
         context.beginPath();
 
         path.forEach((point, index) => {
+            // 경로 좌표를 캔버스 좌표로 변환
             const x = CANVAS_OFFSET + (point.lng - minLng) * scaleX;
             const y = canvas.height - CANVAS_OFFSET - (point.lat - minLat) * scaleY;
 
             if (index === 0) {
-                context.moveTo(x, y);
+                context.moveTo(x, y); // 시작점 이동
             } else {
-                context.lineTo(x, y);
+                context.lineTo(x, y); // 경로 그리기
             }
         });
 
-        context.stroke();
-        return canvas.toDataURL();
+        context.stroke(); // 경로 그리기 완료
+        return canvas.toDataURL(); // 경로를 이미지 데이터로 변환
     };
 
     const handleStartStopWalk = () => {
