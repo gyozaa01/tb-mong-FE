@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import BottomNav from '../Components/BottomNav';
@@ -67,6 +67,7 @@ const ButtonText = styled.div`
 `;
 
 const Setting = () => {
+    const [isLoggedIn, setIsLoggedIn] = useState(false); // 로그인 상태 관리
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -80,23 +81,28 @@ const Setting = () => {
             } else {
                 console.log('카카오 SDK 이미 초기화됨');
             }
+
+            // 로그인 상태 확인
+            if (window.Kakao.Auth && window.Kakao.Auth.getAccessToken()) {
+                setIsLoggedIn(true); // 액세스 토큰이 있으면 로그인 상태로 판단
+                console.log('사용자는 로그인된 상태입니다.');
+            } else {
+                setIsLoggedIn(false); // 액세스 토큰이 없으면 로그아웃 상태로 판단
+                console.log('로그인된 사용자가 없습니다.');
+            }
         } else {
             console.log('Kakao 객체를 찾을 수 없습니다. SDK가 로드되지 않았을 수 있습니다.');
         }
     }, []);
 
     const handleLogout = () => {
-        if (window.Kakao && window.Kakao.Auth) {
-            if (window.Kakao.Auth.getAccessToken()) {
-                window.Kakao.Auth.logout(() => {
-                    console.log('카카오 로그아웃 완료');
-                    navigate('/');
-                });
-            } else {
-                console.log('로그인된 사용자가 없습니다.');
-            }
+        if (isLoggedIn) {
+            window.Kakao.Auth.logout(() => {
+                console.log('카카오 로그아웃 완료');
+                navigate('/');
+            });
         } else {
-            console.log('카카오 Auth를 사용할 수 없습니다. Kakao SDK가 초기화되지 않았거나 로드되지 않았을 수 있습니다.');
+            console.log('로그인된 사용자가 없습니다.');
         }
     };
 
