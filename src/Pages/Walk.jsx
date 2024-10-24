@@ -417,6 +417,7 @@ const WalkDetails = styled.div`
     flex-direction: column;
     justify-content: space-between;
     width: 100%;
+    position: relative;
 `;
 
 const StyledInputField = styled.input`
@@ -453,6 +454,7 @@ const StatsContainer = styled.div`
     padding: 15px;
     width: 90%;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    margin-bottom: 70px;
 `;
 
 const Stats = styled.div`
@@ -482,8 +484,8 @@ const SaveButton = styled.button`
   border: none;
   cursor: pointer;
   position: absolute;
-  right: 8px;
-  bottom: 20px;
+  right: -15px;
+  bottom: -1px;
   img {
     width: 120px;
   }
