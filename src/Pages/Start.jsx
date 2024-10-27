@@ -1,7 +1,12 @@
 import React, { useEffect } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 const WRAPPER_WIDTH = '375px';
+
+const shakeAnimation = keyframes`
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-5deg); }
+`;
 
 const Container = styled.div`
     display: flex;
@@ -38,6 +43,7 @@ const LogoImage = styled.img`
     height: auto;
     transform: rotate(-15deg);
     margin-right: 130%;
+    animation: ${shakeAnimation} 2s infinite;
 `;
 
 const Title = styled.h1`
