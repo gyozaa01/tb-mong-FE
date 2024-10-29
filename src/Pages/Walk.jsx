@@ -9,7 +9,6 @@ const WRAPPER_WIDTH = '375px';
 const Walk = () => {
     const [showMap, setShowMap] = useState(false); // 맵 표시 여부
     const [isTracking, setIsTracking] = useState(false); // 추적 상태 (start/pause)
-    const [isWalking, setIsWalking] = useState(false); // 산책 종료 상태
     const [showEndScreen, setShowEndScreen] = useState(false); // 종료 화면 표시 여부
     const [mapInstance, setMapInstance] = useState(null); // 카카오 맵 인스턴스
     const [distance, setDistance] = useState(0.0); // 이동 거리
@@ -55,7 +54,6 @@ const Walk = () => {
     // 실시간 위치 추적 시작
     const startTracking = () => {
         setIsTracking(true);
-        setIsWalking(true);
         if (navigator.geolocation) {
             const watchId = navigator.geolocation.watchPosition(
                 (position) => {
@@ -89,30 +87,23 @@ const Walk = () => {
         }
     };
 
-    // 일시정지
-    const pauseTracking = () => {
-        setIsTracking(false);
-    };
-
     // 산책 종료
     const stopTracking = () => {
         setIsTracking(false);
         setShowEndScreen(true); // 종료 화면으로 전환
     };
 
-    // 이전 페이지로 돌아가는 함수
-    const handleGoBack = () => {
-        setShowEndScreen(false);
-        setIsWalking(true); // 산책을 계속하도록 설정
+    // 시작 버튼 클릭 시 동작
+    const handleStartButton = () => {
+        startTracking(); // 실시간 추적 시작
     };
 
-    // 시작/일시정지 버튼 클릭 시 동작
-    const handleStartPauseButton = () => {
-        if (isTracking) {
-            pauseTracking(); // 일시정지
-        } else {
-            startTracking(); // 시작
-        }
+    // 산책 종료 확인 버튼 클릭 시 동작
+    const handleEndConfirmation = () => {
+        // 산책 종료 및 데이터 저장 로직 추가
+        console.log("산책 종료 및 저장");
+        setShowEndScreen(false);
+        setShowMap(false);
     };
 
     return (
@@ -145,28 +136,32 @@ const Walk = () => {
                                         </StatBox>
                                     </DistanceTimeWrapper>
                                     <StartStopButtonWrapper>
-                                        <StartPauseButton
-                                            src={isTracking ? "/small_pause.png" : "/small_start.png"}
-                                            alt={isTracking ? "일시정지" : "시작"}
-                                            onClick={handleStartPauseButton}
-                                        />
+                                        {!isTracking ? (
+                                            <StartPauseButton
+                                                src="/small_start.png"
+                                                alt="시작"
+                                                onClick={handleStartButton}
+                                            />
+                                        ) : (
+                                            <StopButton
+                                                src="/small_stop.png"
+                                                alt="멈춤"
+                                                onClick={stopTracking}
+                                            />
+                                        )}
                                     </StartStopButtonWrapper>
-                                    {isWalking && (
-                                        <StopButton
-                                            src="/small_stop.png"
-                                            alt="멈춤"
-                                            onClick={stopTracking}
-                                        />
-                                    )}
                                 </GreenBox>
                             </>
                         )}
                     </MainContent>
                 ) : (
                     <EndScreen>
-                        <BackButton onClick={handleGoBack}>&lt;</BackButton>
                         <EndText>산책을 종료하시겠습니까?</EndText>
-                        <StopIcon src="/stop.png" alt="stop" />
+                        <StopIcon 
+                            src="/stop.png" 
+                            alt="stop" 
+                            onClick={handleEndConfirmation} 
+                        />
                     </EndScreen>
                 )}
                 {!showMap && <BottomNav />}
@@ -264,10 +259,7 @@ const StartPauseButton = styled.img`
 `;
 
 const StopButton = styled.img`
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    width: 50px;
+    width: 80px;
     height: auto;
     cursor: pointer;
 `;
@@ -283,17 +275,6 @@ const EndScreen = styled.div`
     border-radius: 10px 10px 0 0;
     position: relative;
     margin-bottom: -20px;
-`;
-
-const BackButton = styled.button`
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background: none;
-    border: none;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
 `;
 
 const EndText = styled.div`
