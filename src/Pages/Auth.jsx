@@ -49,7 +49,7 @@ const Auth = () => {
     }
   }, [navigate]);
 
-  return <div>카카오 로그인 중...</div>;
+  return <div>여기에 카카오 로그인 성공 시 동네 페이지 넘어가는거랑 홈가는거를 여기에 넣어야함.</div>;
 };
 
 export default Auth;

@@ -23,7 +23,6 @@ const Walk = () => {
     const watchId = useRef(null);
     const pathPoints = useRef([]);
     const navigate = useNavigate();
-
     // 거리 계산 함수
     const calculateDistance = (lat1, lng1, lat2, lng2) => {
         const R = 6371;
@@ -35,7 +34,6 @@ const Walk = () => {
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
     };
-
     // 지도와 마커 및 Polyline 생성 함수
     const createMapAndMarker = useCallback(() => {
         if (mapInstance.current) return;
@@ -56,18 +54,18 @@ const Walk = () => {
         });
         markerInstance.current.setMap(mapInstance.current);
     }, [currentLocation]);
-
     // 좌표를 주소로 변환하는 함수
-    const getAddressFromCoords = (lat, lng) => {
+    const getAddressFromCoords = (latitude, longitude) => {
         const geocoder = new kakao.maps.services.Geocoder();
-        const coord = new kakao.maps.LatLng(lat, lng);
-        const callback = (result, status) => {
+        const coord = new kakao.maps.LatLng(latitude, longitude);
+
+        geocoder.coord2RegionCode(coord.getLng(), coord.getLat(), (result, status) => {
             if (status === kakao.maps.services.Status.OK) {
-                const dongName = result[0].address.region_3depth_name; // 동 이름 추출
-                setStartLocationName(dongName); // 동 이름 상태로 저장
+                if (result[0].address_name) {
+                    setStartLocationName(result[0].address_name);
+                }
             }
-        };
-        geocoder.coord2Address(coord.getLng(), coord.getLat(), callback);
+        });
     };
 
     const getLocationUpdates = () => {
@@ -76,24 +74,22 @@ const Walk = () => {
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const newLocation = { lat: latitude, lng: longitude };
-                    
+
                     const dist = calculateDistance(
                         previousLocation.current.lat,
                         previousLocation.current.lng,
                         latitude,
                         longitude
                     );
-    
+
                     if (!startLocation) {
                         setStartLocation({ lat: latitude, lng: longitude });
-                        getAddressFromCoords(latitude, longitude); // 좌표에서 동 이름 추출
+                        getAddressFromCoords(latitude, longitude);
                     }
-    
+
                     if (isWalking) {
                         setDistance((prevDist) => prevDist + dist);
-    
                         const newPoint = new kakao.maps.LatLng(latitude, longitude);
-
                         // Polyline이 존재하지 않는 경우 새로운 Polyline 생성
                         if (!polylineInstance.current) {
                             polylineInstance.current = new kakao.maps.Polyline({
@@ -105,25 +101,21 @@ const Walk = () => {
                                 strokeStyle: "solid",
                             });
                         } else {
-                            // Polyline이 이미 존재하는 경우 기존 경로에 새 좌표 추가
-                            const path = polylineInstance.current.getPath();
-                            path.push(newPoint);
-                            polylineInstance.current.setPath(path);
+                            pathPoints.current.push(newPoint);
+                            polylineInstance.current.setPath(pathPoints.current);
                         }
 
                         // 지도 중심을 새로운 위치로 이동
                         mapInstance.current.setCenter(newPoint);
-
-                        // 경로 점 저장
-                        pathPoints.current.push({ lat: latitude, lng: longitude });
+                        pathPoints.current.push(newLocation);
                     }
-    
+
                     if (mapInstance.current && markerInstance.current) {
                         const newCenter = new kakao.maps.LatLng(latitude, longitude);
                         mapInstance.current.setCenter(newCenter);
                         markerInstance.current.setPosition(newCenter);
                     }
-    
+
                     setCurrentLocation(newLocation);
                     previousLocation.current = newLocation;
                 },
@@ -229,7 +221,9 @@ const Walk = () => {
 
         return () => {
             document.head.removeChild(script);
-            removeLocationUpdates();
+            if (watchId.current) {
+                navigator.geolocation.clearWatch(watchId.current);
+            }
         };
     }, [createMapAndMarker]);
 
