@@ -10,6 +10,7 @@ const Walk = () => {
     const [showMap, setShowMap] = useState(false); // 맵 표시 여부
     const [isTracking, setIsTracking] = useState(false); // 추적 상태 (start/pause)
     const [isWalking, setIsWalking] = useState(false); // 산책 종료 상태
+    const [showEndScreen, setShowEndScreen] = useState(false); // 종료 화면 표시 여부
     const [mapInstance, setMapInstance] = useState(null); // 카카오 맵 인스턴스
     const [distance, setDistance] = useState(0.0); // 이동 거리
     const [time, setTime] = useState(0); // 시간 (초 단위)
@@ -96,7 +97,13 @@ const Walk = () => {
     // 산책 종료
     const stopTracking = () => {
         setIsTracking(false);
-        setIsWalking(false); // 산책 종료 상태로 전환
+        setShowEndScreen(true); // 종료 화면으로 전환
+    };
+
+    // 이전 페이지로 돌아가는 함수
+    const handleGoBack = () => {
+        setShowEndScreen(false);
+        setIsWalking(true); // 산책을 계속하도록 설정
     };
 
     // 시작/일시정지 버튼 클릭 시 동작
@@ -112,48 +119,56 @@ const Walk = () => {
         <Container>
             <AppWrapper>
                 <Header />
-                <MainContent>
-                    {!showMap ? (
-                        <img
-                            src="/start.png"
-                            alt="Start"
-                            className="start-button"
-                            onClick={handleStartClick}
-                        />
-                    ) : (
-                        <>
-                            <MapWrapper>
-                                <div id="map" style={{ width: "100%", height: "100%" }}></div>
-                            </MapWrapper>
-                            <GreenBox>
-                                <DistanceTimeWrapper>
-                                    <StatBox>
-                                        <StatNumber>{distance.toFixed(2)}</StatNumber>
-                                        <StatLabel>킬로미터</StatLabel>
-                                    </StatBox>
-                                    <StatBox>
-                                        <StatNumber>{Math.floor(time / 60).toString().padStart(2, '0')}:{(time % 60).toString().padStart(2, '0')}</StatNumber>
-                                        <StatLabel>시간</StatLabel>
-                                    </StatBox>
-                                </DistanceTimeWrapper>
-                                <StartStopButtonWrapper>
-                                    <StartPauseButton
-                                        src={isTracking ? "/small_pause.png" : "/small_start.png"}
-                                        alt={isTracking ? "일시정지" : "시작"}
-                                        onClick={handleStartPauseButton}
-                                    />
-                                </StartStopButtonWrapper>
-                                {isWalking && (
-                                    <StopButton
-                                        src="/small_stop.png"
-                                        alt="멈춤"
-                                        onClick={stopTracking}
-                                    />
-                                )}
-                            </GreenBox>
-                        </>
-                    )}
-                </MainContent>
+                {!showEndScreen ? (
+                    <MainContent>
+                        {!showMap ? (
+                            <img
+                                src="/start.png"
+                                alt="Start"
+                                className="start-button"
+                                onClick={handleStartClick}
+                            />
+                        ) : (
+                            <>
+                                <MapWrapper>
+                                    <div id="map" style={{ width: "100%", height: "100%" }}></div>
+                                </MapWrapper>
+                                <GreenBox>
+                                    <DistanceTimeWrapper>
+                                        <StatBox>
+                                            <StatNumber>{distance.toFixed(2)}</StatNumber>
+                                            <StatLabel>킬로미터</StatLabel>
+                                        </StatBox>
+                                        <StatBox>
+                                            <StatNumber>{Math.floor(time / 60).toString().padStart(2, '0')}:{(time % 60).toString().padStart(2, '0')}</StatNumber>
+                                            <StatLabel>시간</StatLabel>
+                                        </StatBox>
+                                    </DistanceTimeWrapper>
+                                    <StartStopButtonWrapper>
+                                        <StartPauseButton
+                                            src={isTracking ? "/small_pause.png" : "/small_start.png"}
+                                            alt={isTracking ? "일시정지" : "시작"}
+                                            onClick={handleStartPauseButton}
+                                        />
+                                    </StartStopButtonWrapper>
+                                    {isWalking && (
+                                        <StopButton
+                                            src="/small_stop.png"
+                                            alt="멈춤"
+                                            onClick={stopTracking}
+                                        />
+                                    )}
+                                </GreenBox>
+                            </>
+                        )}
+                    </MainContent>
+                ) : (
+                    <EndScreen>
+                        <BackButton onClick={handleGoBack}>&lt;</BackButton>
+                        <EndText>산책을 종료하시겠습니까?</EndText>
+                        <StopIcon src="/stop.png" alt="stop" />
+                    </EndScreen>
+                )}
                 {!showMap && <BottomNav />}
             </AppWrapper>
         </Container>
@@ -193,7 +208,7 @@ const MainContent = styled.div`
 
 const MapWrapper = styled.div`
     width: 100%;
-    flex-grow: 7; /* 지도는 화면의 70% 차지 */
+    flex-grow: 7;
     background-color: #ffffff;
     border-radius: 10px;
     overflow: hidden;
@@ -201,7 +216,7 @@ const MapWrapper = styled.div`
 
 const GreenBox = styled.div`
     width: 100%;
-    height: 30%; /* GreenBox는 화면의 30% 차지 */
+    height: 30%;
     background-color: #51B47D;
     border-radius: 10px 10px 0 0;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
@@ -253,6 +268,41 @@ const StopButton = styled.img`
     bottom: 20px;
     right: 20px;
     width: 50px;
+    height: auto;
+    cursor: pointer;
+`;
+
+const EndScreen = styled.div`
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    background-color: #51B47D;
+    border-radius: 10px 10px 0 0;
+    position: relative;
+    margin-bottom: -20px;
+`;
+
+const BackButton = styled.button`
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+`;
+
+const EndText = styled.div`
+    font-size: 24px;
+    margin-bottom: 20px;
+`;
+
+const StopIcon = styled.img`
+    width: 250px;
     height: auto;
     cursor: pointer;
 `;
