@@ -24,7 +24,7 @@ const Walk = () => {
         if (isTracking) {
             timerRef.current = setInterval(() => {
                 setTime((prevTime) => prevTime + 1);
-            }, 1000);
+            }, 5000);
         } else {
             clearInterval(timerRef.current);
         }
