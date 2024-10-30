@@ -10,9 +10,12 @@ const Walk = () => {
     const [showMap, setShowMap] = useState(false); // 맵 표시 여부
     const [isTracking, setIsTracking] = useState(false); // 추적 상태 (start/pause)
     const [showEndScreen, setShowEndScreen] = useState(false); // 종료 화면 표시 여부
+    const [showSaveScreen, setShowSaveScreen] = useState(false);
     const [mapInstance, setMapInstance] = useState(null); // 카카오 맵 인스턴스
     const [distance, setDistance] = useState(0.0); // 이동 거리
     const [time, setTime] = useState(0); // 시간 (초 단위)
+    const [polylinePath, setPolylinePath] = useState([]);
+    const [location, setLocation] = useState('');
     const timerRef = useRef(null); // 타이머 관리용 useRef
 
     // 타이머용 useEffect (isTracking이 바뀔 때만 실행)
@@ -26,7 +29,6 @@ const Walk = () => {
         }
         return () => clearInterval(timerRef.current); // Cleanup
     }, [isTracking]);
-
     // 산책 페이지에서 start.png 클릭 시 맵을 띄우고 실시간 경로 추적 시작
     const handleStartClick = () => {
         setShowMap(true); // start.png 클릭 시 맵 표시
@@ -61,6 +63,14 @@ const Walk = () => {
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
 
                     // 거리 계산 로직 (임시로 가정)
+                    const geocoder = new kakao.maps.services.Geocoder();
+                    geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
+                        if (status === kakao.maps.services.Status.OK) {
+                            const dongName = result[0].region_3depth_name;
+                            setLocation(dongName);
+                        }
+                    });
+
                     setDistance((prev) => prev + 0.001); // 이동 거리 증가 (임시)
 
                     if (mapInstance) {
@@ -73,6 +83,7 @@ const Walk = () => {
                             strokeStyle: "solid",
                         });
                         polyline.setPath([newPos]);
+                        setPolylinePath((prevPath) => [...prevPath, newPos]);
                         mapInstance.setCenter(newPos); // 새로운 위치로 지도 이동
                     }
                 },
@@ -86,89 +97,274 @@ const Walk = () => {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
         }
     };
-
     // 산책 종료
     const stopTracking = () => {
         setIsTracking(false);
         setShowEndScreen(true); // 종료 화면으로 전환
     };
 
-    // 시작 버튼 클릭 시 동작
-    const handleStartButton = () => {
-        startTracking(); // 실시간 추적 시작
+    const handleEndConfirmation = () => {
+        setShowEndScreen(false);
+        setShowSaveScreen(true);
     };
 
-    // 산책 종료 확인 버튼 클릭 시 동작
-    const handleEndConfirmation = () => {
-        // 산책 종료 및 데이터 저장 로직 추가
-        console.log("산책 종료 및 저장");
-        setShowEndScreen(false);
-        setShowMap(false);
+    const handleSave = () => {
+        console.log("산책 정보 저장");
+        window.location.href = "/record";
+    };
+
+    const formatTime = () => {
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    };
+    
+    const formatPace = () => {
+        if (distance === 0) {
+            return "N/A";  // 거리가 0일 때는 계산하지 않음
+        } else {
+            const paceInSeconds = time / distance; // 초/km 계산
+            const paceMinutes = Math.floor(paceInSeconds / 60);
+            const paceSeconds = Math.floor(paceInSeconds % 60);
+            return `${paceMinutes}' ${String(paceSeconds).padStart(2, '0')}''`; 
+        }
+    };    
+    
+    const calculateSpeed = () => {
+        if (time === 0 || distance === 0) {
+            return "N/A"; // 시간이 0이거나 거리가 0일 때는 계산하지 않음
+        } else {
+            const speed = (distance / (time / 3600)).toFixed(2);  // 시속(km/h) 계산
+            return `${speed}`;
+        }
     };
 
     return (
         <Container>
             <AppWrapper>
                 <Header />
-                {!showEndScreen ? (
-                    <MainContent>
-                        {!showMap ? (
-                            <img
-                                src="/start.png"
-                                alt="Start"
-                                className="start-button"
-                                onClick={handleStartClick}
-                            />
-                        ) : (
-                            <>
-                                <MapWrapper>
-                                    <div id="map" style={{ width: "100%", height: "100%" }}></div>
-                                </MapWrapper>
-                                <GreenBox>
-                                    <DistanceTimeWrapper>
-                                        <StatBox>
-                                            <StatNumber>{distance.toFixed(2)}</StatNumber>
-                                            <StatLabel>킬로미터</StatLabel>
-                                        </StatBox>
-                                        <StatBox>
-                                            <StatNumber>{Math.floor(time / 60).toString().padStart(2, '0')}:{(time % 60).toString().padStart(2, '0')}</StatNumber>
-                                            <StatLabel>시간</StatLabel>
-                                        </StatBox>
-                                    </DistanceTimeWrapper>
-                                    <StartStopButtonWrapper>
-                                        {!isTracking ? (
-                                            <StartPauseButton
-                                                src="/small_start.png"
-                                                alt="시작"
-                                                onClick={handleStartButton}
-                                            />
-                                        ) : (
-                                            <StopButton
-                                                src="/small_stop.png"
-                                                alt="멈춤"
-                                                onClick={stopTracking}
-                                            />
-                                        )}
-                                    </StartStopButtonWrapper>
-                                </GreenBox>
-                            </>
-                        )}
-                    </MainContent>
+                {showSaveScreen ? (
+                        <SaveContent>
+                            <Input placeholder="산책로명을 입력하세요." />
+
+                            <LocationWrapper>
+                                <LocationIcon src="/location.png" alt="location" />
+                                <LocationName>{location}</LocationName>
+                            </LocationWrapper>
+
+                            <PolylineMap polylinePath={polylinePath} />
+
+                            <SummaryBox>
+                                <SummaryRow>
+                                    <SummaryItem>
+                                        <StatNumber>{distance.toFixed(2)}</StatNumber>
+                                        <StatLabel>킬로미터</StatLabel>
+                                    </SummaryItem>
+                                    <SummaryItem>
+                                        <StatNumber>{formatTime()}</StatNumber>
+                                        <StatLabel>시간</StatLabel>
+                                    </SummaryItem>
+                                </SummaryRow>
+                                <SummaryRow>
+                                    <SummaryItem>
+                                        <StatNumber>{calculateSpeed()}</StatNumber>
+                                        <StatLabel>시속</StatLabel>
+                                    </SummaryItem>
+                                    <SummaryItem>
+                                        <StatNumber>{formatPace()}</StatNumber>
+                                        <StatLabel>평균 페이스</StatLabel>
+                                    </SummaryItem>
+                                </SummaryRow>
+                            </SummaryBox>
+
+                            <SaveButton src="/save.png" alt="Save" onClick={handleSave} />
+                        </SaveContent>
                 ) : (
-                    <EndScreen>
-                        <EndText>산책을 종료하시겠습니까?</EndText>
-                        <StopIcon 
-                            src="/stop.png" 
-                            alt="stop" 
-                            onClick={handleEndConfirmation} 
-                        />
-                    </EndScreen>
+                    !showEndScreen ? (
+                        <MainContent>
+                            {!showMap ? (
+                                <img
+                                    src="/start.png"
+                                    alt="Start"
+                                    className="start-button"
+                                    onClick={handleStartClick}
+                                />
+                            ) : (
+                                <>
+                                    <TrackingMapWrapper>
+                                        <div id="map" style={{ width: "100%", height: "100%" }}></div>
+                                    </TrackingMapWrapper>
+                                    <GreenBox>
+                                        <DistanceTimeWrapper>
+                                            <StatBox>
+                                                <StatNumber>{distance.toFixed(2)}</StatNumber>
+                                                <StatLabel>킬로미터</StatLabel>
+                                            </StatBox>
+                                            <StatBox>
+                                                <StatNumber>{Math.floor(time / 60).toString().padStart(2, '0')}:{(time % 60).toString().padStart(2, '0')}</StatNumber>
+                                                <StatLabel>시간</StatLabel>
+                                            </StatBox>
+                                        </DistanceTimeWrapper>
+                                        <StartStopButtonWrapper>
+                                            {!isTracking ? (
+                                                <StartPauseButton
+                                                    src="/small_start.png"
+                                                    alt="시작"
+                                                    onClick={startTracking}
+                                                />
+                                            ) : (
+                                                <StopButton
+                                                    src="/small_stop.png"
+                                                    alt="멈춤"
+                                                    onClick={stopTracking}
+                                                />
+                                            )}
+                                        </StartStopButtonWrapper>
+                                    </GreenBox>
+                                </>
+                            )}
+                        </MainContent>
+                    ) : (
+                        <EndScreen>
+                            <EndText>산책을 종료하시겠습니까?</EndText>
+                            <StopIcon 
+                                src="/stop.png" 
+                                alt="stop" 
+                                onClick={handleEndConfirmation} 
+                            />
+                        </EndScreen>
+                    )
                 )}
-                {!showMap && <BottomNav />}
+                {!showMap && !showSaveScreen && <BottomNav />}
             </AppWrapper>
         </Container>
-    );
+    );    
 };
+
+const PolylineMap = ({ polylinePath }) => {
+    useEffect(() => {
+        if (window.kakao && window.kakao.maps) {
+            const mapContainer = document.getElementById('save-map');
+            const mapOption = {
+                center: new window.kakao.maps.LatLng(polylinePath[0].Ma, polylinePath[0].La),
+                level: 5,
+            };
+            const map = new window.kakao.maps.Map(mapContainer, mapOption);
+
+            const polyline = new window.kakao.maps.Polyline({
+                path: polylinePath,
+                strokeWeight: 5,
+                strokeColor: '#FF0000',
+                strokeOpacity: 0.7,
+                strokeStyle: 'solid',
+            });
+
+            polyline.setMap(map);
+        }
+    }, [polylinePath]);
+
+    return <SaveMapWrapper id="save-map" />;
+};
+
+const SaveContent = styled.div`
+    width: 100%;
+    height: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #51B47D;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    margin-bottom: -20px;
+`;
+
+const Input = styled.input`
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-family: DNFBitBitv2;
+    background-color: transparent;
+    border: none;
+    color: black;
+`;
+
+const LocationWrapper = styled.div`
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 15px;
+    font-family: DNFBitBitv2;
+`;
+
+const LocationIcon = styled.img`
+    width: 24px;
+    height: 24px;
+    margin-right: 5px;
+`;
+
+const LocationName = styled.span`
+    font-size: 14px;
+    color: #333;
+`;
+
+const TrackingMapWrapper = styled.div`
+    width: 100%;
+    flex-grow: 7;
+    background-color: #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+`;
+
+const SaveMapWrapper = styled.div`
+    width: 100%;
+    height: 40%;
+    background-color: #e5e5e5;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+    border-radius: 10px;
+`;
+
+const SummaryBox = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center
+    justify-content: center;
+    width: 90%;
+    margin-top: 10px;
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+`;
+
+const SummaryRow = styled.div`
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-bottom: 20px;
+`;
+
+const SummaryItem = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+`;
+
+const SaveButton = styled.img`
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    right: 10px;
+    bottom: -1px;
+    img {
+        width: 80px;
+    }
+`;
 
 const Container = styled.div`
     display: flex;
@@ -199,14 +395,6 @@ const MainContent = styled.div`
     justify-content: center;
     align-items: center;
     margin-bottom: -20px;
-`;
-
-const MapWrapper = styled.div`
-    width: 100%;
-    flex-grow: 7;
-    background-color: #ffffff;
-    border-radius: 10px;
-    overflow: hidden;
 `;
 
 const GreenBox = styled.div`
