@@ -18,18 +18,66 @@ const Walk = () => {
     const [location, setLocation] = useState('');
     const timerRef = useRef(null); // 타이머 관리용 useRef
     const [previousPosition, setPreviousPosition] = useState(null);
+    const updateCountRef = useRef(0); // updateCount를 useRef로 변경
 
     // 타이머용 useEffect (isTracking이 바뀔 때만 실행)
     useEffect(() => {
         if (isTracking) {
             timerRef.current = setInterval(() => {
-                setTime((prevTime) => prevTime + 1);
-            }, 10000);
+                setTime((prevTime) => prevTime + 1); // 타이머는 1초마다 증가
+                updateCountRef.current += 1;
+
+                // 45초마다 경로 업데이트
+                if (updateCountRef.current === 45) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const { latitude, longitude } = position.coords;
+                            const newPos = new kakao.maps.LatLng(latitude, longitude);
+
+                            // 이전 위치와 비교하여 경로 업데이트
+                            if (previousPosition) {
+                                const distanceBetween = kakao.maps.services.Util.getDistance(
+                                    previousPosition,
+                                    newPos
+                                );
+
+                                if (distanceBetween >= 3) { // 3m 이상 움직였을 경우 경로 그리기
+                                    setPreviousPosition(newPos);
+                                    setPolylinePath((prevPath) => {
+                                        const updatedPath = [...prevPath, newPos];
+                                        let polyline = mapInstance.polyline;
+                                        if (!polyline) {
+                                            polyline = new kakao.maps.Polyline({
+                                                map: mapInstance,
+                                                path: updatedPath,
+                                                strokeWeight: 5,
+                                                strokeColor: "#FF0000",
+                                                strokeOpacity: 0.7,
+                                                strokeStyle: "solid",
+                                            });
+                                            mapInstance.polyline = polyline;
+                                        } else {
+                                            polyline.setPath(updatedPath);
+                                        }
+                                        mapInstance.setCenter(newPos);
+                                        return updatedPath;
+                                    });
+                                }
+                            }
+                        },
+                        (error) => console.error("Error in getting geolocation: ", error),
+                        { enableHighAccuracy: true, maximumAge: 0 }
+                    );
+                    updateCountRef.current = 0; // 카운터 초기화
+                }
+            }, 1000); // 타이머는 1초 단위로 실행
         } else {
             clearInterval(timerRef.current);
         }
+
         return () => clearInterval(timerRef.current); // Cleanup
-    }, [isTracking]);
+    }, [isTracking, mapInstance, previousPosition]);
+
     // 산책 페이지에서 start.png 클릭 시 맵을 띄우고 실시간 경로 추적 시작
     const handleStartClick = () => {
         setShowMap(true); // start.png 클릭 시 맵 표시
@@ -56,73 +104,73 @@ const Walk = () => {
 
     // 실시간 위치 추적 시작
     const startTracking = () => {
-    setIsTracking(true);
-    if (navigator.geolocation) {
-        const watchId = navigator.geolocation.watchPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                const newPos = new kakao.maps.LatLng(latitude, longitude);
+        setIsTracking(true);
+        if (navigator.geolocation) {
+            const watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const newPos = new kakao.maps.LatLng(latitude, longitude);
 
-                // 추가: 이전 위치와 현재 위치의 거리 계산
-                if (previousPosition) {
-                    const distanceBetween = kakao.maps.services.Util.getDistance(
-                        previousPosition,
-                        newPos
-                    );
+                    // 추가: 이전 위치와 현재 위치의 거리 계산
+                    if (previousPosition) {
+                        const distanceBetween = kakao.maps.services.Util.getDistance(
+                            previousPosition,
+                            newPos
+                        );
 
-                    // 임계값 (3m) 이상 움직였을 때만 업데이트
-                    if (distanceBetween < 3) {
-                        return; // 3m 이하이면 return으로 무시
-                    }
-                }
-
-                // 이전 위치를 현재 위치로 업데이트
-                setPreviousPosition(newPos);
-
-                // 거리 증가 및 지도 이동 로직 그대로 유지
-                const geocoder = new kakao.maps.services.Geocoder();
-                geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
-                    if (status === kakao.maps.services.Status.OK) {
-                        const dongName = result[0].region_3depth_name;
-                        setLocation(dongName);
-                    }
-                });
-
-                setDistance((prev) => prev + 0.001); // 이동 거리 증가 (임시)
-
-                if (mapInstance) {
-                    setPolylinePath((prevPath) => {
-                        const updatedPath = [...prevPath, newPos];
-
-                        let polyline = mapInstance.polyline;
-                        if (!polyline) {
-                            polyline = new kakao.maps.Polyline({
-                                map: mapInstance,
-                                path: updatedPath,
-                                strokeWeight: 5,
-                                strokeColor: "#FF0000",
-                                strokeOpacity: 0.7,
-                                strokeStyle: "solid",
-                            });
-                            mapInstance.polyline = polyline;
-                        } else {
-                            polyline.setPath(updatedPath);
+                        // 임계값 (3m) 이상 움직였을 때만 업데이트
+                        if (distanceBetween < 3) {
+                            return; // 3m 이하이면 return으로 무시
                         }
+                    }
 
-                        mapInstance.setCenter(newPos);
-                        return updatedPath;
+                    // 이전 위치를 현재 위치로 업데이트
+                    setPreviousPosition(newPos);
+
+                    // 거리 증가 및 지도 이동 로직 그대로 유지
+                    const geocoder = new kakao.maps.services.Geocoder();
+                    geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
+                        if (status === kakao.maps.services.Status.OK) {
+                            const dongName = result[0].region_3depth_name;
+                            setLocation(dongName);
+                        }
                     });
-                }
-            },
-            (error) => console.error("Error in getting geolocation: ", error),
-            { enableHighAccuracy: true, maximumAge: 0 }
-        );
-        // 추적 중지 시 watchPosition 해제
-        return () => navigator.geolocation.clearWatch(watchId);
-    } else {
-        console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
-    }
-};
+
+                    setDistance((prev) => prev + 0.001); // 이동 거리 증가 (임시)
+
+                    if (mapInstance) {
+                        setPolylinePath((prevPath) => {
+                            const updatedPath = [...prevPath, newPos];
+
+                            let polyline = mapInstance.polyline;
+                            if (!polyline) {
+                                polyline = new kakao.maps.Polyline({
+                                    map: mapInstance,
+                                    path: updatedPath,
+                                    strokeWeight: 5,
+                                    strokeColor: "#FF0000",
+                                    strokeOpacity: 0.7,
+                                    strokeStyle: "solid",
+                                });
+                                mapInstance.polyline = polyline;
+                            } else {
+                                polyline.setPath(updatedPath);
+                            }
+
+                            mapInstance.setCenter(newPos);
+                            return updatedPath;
+                        });
+                    }
+                },
+                (error) => console.error("Error in getting geolocation: ", error),
+                { enableHighAccuracy: true, maximumAge: 0 }
+            );
+            // 추적 중지 시 watchPosition 해제
+            return () => navigator.geolocation.clearWatch(watchId);
+        } else {
+            console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
+        }
+    };
 
     // 산책 종료
     const stopTracking = () => {
@@ -145,7 +193,7 @@ const Walk = () => {
         const seconds = time % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
-    
+
     const formatPace = () => {
         if (distance === 0) {
             return "N/A";  // 거리가 0일 때는 계산하지 않음
@@ -156,7 +204,6 @@ const Walk = () => {
             return `${paceMinutes}' ${String(paceSeconds).padStart(2, '0')}''`; 
         }
     };    
-    
     const calculateSpeed = () => {
         if (time === 0 || distance === 0) {
             return "N/A"; // 시간이 0이거나 거리가 0일 때는 계산하지 않음
@@ -171,41 +218,41 @@ const Walk = () => {
             <AppWrapper>
                 <Header />
                 {showSaveScreen ? (
-                        <SaveContent>
-                            <Input placeholder="산책로명을 입력하세요." />
+                    <SaveContent>
+                        <Input placeholder="산책로명을 입력하세요." />
 
-                            <LocationWrapper>
-                                <LocationIcon src="/location.png" alt="location" />
-                                <LocationName>{location}</LocationName>
-                            </LocationWrapper>
+                        <LocationWrapper>
+                            <LocationIcon src="/location.png" alt="location" />
+                            <LocationName>{location}</LocationName>
+                        </LocationWrapper>
 
-                            <PolylineMap polylinePath={polylinePath} />
+                        <PolylineMap polylinePath={polylinePath} />
 
-                            <SummaryBox>
-                                <SummaryRow>
-                                    <SummaryItem>
-                                        <StatNumber>{distance.toFixed(2)}</StatNumber>
-                                        <StatLabel>킬로미터</StatLabel>
-                                    </SummaryItem>
-                                    <SummaryItem>
-                                        <StatNumber>{formatTime()}</StatNumber>
-                                        <StatLabel>시간</StatLabel>
-                                    </SummaryItem>
-                                </SummaryRow>
-                                <SummaryRow>
-                                    <SummaryItem>
-                                        <StatNumber>{calculateSpeed()}</StatNumber>
-                                        <StatLabel>시속</StatLabel>
-                                    </SummaryItem>
-                                    <SummaryItem>
-                                        <StatNumber>{formatPace()}</StatNumber>
-                                        <StatLabel>평균 페이스</StatLabel>
-                                    </SummaryItem>
-                                </SummaryRow>
-                            </SummaryBox>
+                        <SummaryBox>
+                            <SummaryRow>
+                                <SummaryItem>
+                                    <StatNumber>{distance.toFixed(2)}</StatNumber>
+                                    <StatLabel>킬로미터</StatLabel>
+                                </SummaryItem>
+                                <SummaryItem>
+                                    <StatNumber>{formatTime()}</StatNumber>
+                                    <StatLabel>시간</StatLabel>
+                                </SummaryItem>
+                            </SummaryRow>
+                            <SummaryRow>
+                                <SummaryItem>
+                                    <StatNumber>{calculateSpeed()}</StatNumber>
+                                    <StatLabel>시속</StatLabel>
+                                </SummaryItem>
+                                <SummaryItem>
+                                    <StatNumber>{formatPace()}</StatNumber>
+                                    <StatLabel>평균 페이스</StatLabel>
+                                </SummaryItem>
+                            </SummaryRow>
+                        </SummaryBox>
 
-                            <SaveButton src="/save.png" alt="Save" onClick={handleSave} />
-                        </SaveContent>
+                        <SaveButton src="/save.png" alt="Save" onClick={handleSave} />
+                    </SaveContent>
                 ) : (
                     !showEndScreen ? (
                         <MainContent>
