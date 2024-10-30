@@ -28,7 +28,7 @@ const Walk = () => {
                 updateCountRef.current += 1;
 
                 // 45초마다 경로 업데이트
-                if (updateCountRef.current === 5) {
+                if (updateCountRef.current === 45) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
                             const { latitude, longitude } = position.coords;
@@ -41,7 +41,7 @@ const Walk = () => {
                                     newPos
                                 );
 
-                                if (distanceBetween >= 30) { // 30m 이상 움직였을 경우 경로 그리기
+                                if (distanceBetween >= 3) { // 3m 이상 움직였을 경우 경로 그리기
                                     setPreviousPosition(newPos);
                                     setPolylinePath((prevPath) => {
                                         const updatedPath = [...prevPath, newPos];
