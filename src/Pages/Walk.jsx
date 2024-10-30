@@ -24,7 +24,7 @@ const Walk = () => {
         if (isTracking) {
             timerRef.current = setInterval(() => {
                 setTime((prevTime) => prevTime + 1);
-            }, 5000);
+            }, 10000);
         } else {
             clearInterval(timerRef.current);
         }
@@ -274,13 +274,13 @@ const PolylineMap = ({ polylinePath }) => {
             const mapContainer = document.getElementById('save-map');
             const mapOption = {
                 center: new window.kakao.maps.LatLng(polylinePath[0].Ma, polylinePath[0].La),
-                level: 5,
+                level: 6,
             };
             const map = new window.kakao.maps.Map(mapContainer, mapOption);
 
             const polyline = new window.kakao.maps.Polyline({
                 path: polylinePath,
-                strokeWeight: 5,
+                strokeWeight: 3,
                 strokeColor: '#FF0000',
                 strokeOpacity: 0.7,
                 strokeStyle: 'solid',
