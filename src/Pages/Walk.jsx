@@ -61,7 +61,7 @@ const Walk = () => {
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
-
+    
                     // 거리 계산 로직 (임시로 가정)
                     const geocoder = new kakao.maps.services.Geocoder();
                     geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
@@ -70,33 +70,45 @@ const Walk = () => {
                             setLocation(dongName);
                         }
                     });
-
+    
                     setDistance((prev) => prev + 0.001); // 이동 거리 증가 (임시)
-
+    
                     if (mapInstance) {
-                        const polyline = new kakao.maps.Polyline({
-                            map: mapInstance,
-                            path: [newPos], // Polyline에 최신 좌표 설정
-                            strokeWeight: 5,
-                            strokeColor: "#FF0000",
-                            strokeOpacity: 0.7,
-                            strokeStyle: "solid",
+                        setPolylinePath((prevPath) => {
+                            const updatedPath = [...prevPath, newPos];
+    
+                            // 기존 polyline이 있다면 경로를 갱신
+                            let polyline = mapInstance.polyline;
+                            if (!polyline) {
+                                polyline = new kakao.maps.Polyline({
+                                    map: mapInstance,
+                                    path: updatedPath, // 초기 경로 설정
+                                    strokeWeight: 5,
+                                    strokeColor: "#FF0000",
+                                    strokeOpacity: 0.7,
+                                    strokeStyle: "solid",
+                                });
+                                mapInstance.polyline = polyline; // 지도 인스턴스에 저장
+                            } else {
+                                polyline.setPath(updatedPath); // 경로 업데이트
+                            }
+    
+                            mapInstance.setCenter(newPos); // 새로운 위치로 지도 이동
+                            return updatedPath; // 업데이트된 경로 반환
                         });
-                        polyline.setPath([newPos]);
-                        setPolylinePath((prevPath) => [...prevPath, newPos]);
-                        mapInstance.setCenter(newPos); // 새로운 위치로 지도 이동
                     }
                 },
                 (error) => console.error("Error in getting geolocation: ", error),
                 { enableHighAccuracy: true, maximumAge: 0 }
             );
-
             // 추적 중지 시 watchPosition 해제
             return () => navigator.geolocation.clearWatch(watchId);
         } else {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
         }
     };
+    
+
     // 산책 종료
     const stopTracking = () => {
         setIsTracking(false);
