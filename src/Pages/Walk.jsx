@@ -108,32 +108,25 @@ const Walk = () => {
         if (navigator.geolocation) {
             const watchId = navigator.geolocation.watchPosition(
                 (position) => {
-                    const { latitude, longitude, speed } = position.coords; // 속도(speed) 추가
+                    const { latitude, longitude } = position.coords;
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
-    
-                    // 속도가 거의 0이거나 GPS 오차로 인한 움직임이 의심될 때는 업데이트 하지 않음
-                    if (speed < 0.1) {  // 속도가 0.1m/s 이하일 때 업데이트하지 않음
-                        return;
-                    }
-    
-                    let distanceBetween = 0; // distanceBetween 변수를 선언
-    
+
                     // 추가: 이전 위치와 현재 위치의 거리 계산
                     if (previousPosition) {
-                        distanceBetween = kakao.maps.services.Util.getDistance(
+                        const distanceBetween = kakao.maps.services.Util.getDistance(
                             previousPosition,
                             newPos
                         );
-    
-                        // 임계값 (10m) 이상 움직였을 때만 업데이트
-                        if (distanceBetween < 10) {  // 10m 이하이면 무시
-                            return; 
+
+                        // 임계값 (3m) 이상 움직였을 때만 업데이트
+                        if (distanceBetween < 3) {
+                            return; // 3m 이하이면 return으로 무시
                         }
                     }
-    
+
                     // 이전 위치를 현재 위치로 업데이트
                     setPreviousPosition(newPos);
-    
+
                     // 거리 증가 및 지도 이동 로직 그대로 유지
                     const geocoder = new kakao.maps.services.Geocoder();
                     geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
@@ -142,13 +135,13 @@ const Walk = () => {
                             setLocation(dongName);
                         }
                     });
-    
-                    setDistance((prev) => prev + (distanceBetween / 1000)); // 이동 거리 증가
-    
+
+                    setDistance((prev) => prev + 0.001); // 이동 거리 증가 (임시)
+
                     if (mapInstance) {
                         setPolylinePath((prevPath) => {
                             const updatedPath = [...prevPath, newPos];
-    
+
                             let polyline = mapInstance.polyline;
                             if (!polyline) {
                                 polyline = new kakao.maps.Polyline({
@@ -163,7 +156,7 @@ const Walk = () => {
                             } else {
                                 polyline.setPath(updatedPath);
                             }
-    
+
                             mapInstance.setCenter(newPos);
                             return updatedPath;
                         });
@@ -177,7 +170,7 @@ const Walk = () => {
         } else {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
         }
-    };    
+    };
 
     // 산책 종료
     const stopTracking = () => {
