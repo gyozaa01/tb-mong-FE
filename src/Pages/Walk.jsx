@@ -128,6 +128,11 @@ const Walk = () => {
 
     const handleSave = () => {
         console.log("산책 정보 저장");
+
+        // 산책 정보를 저장 후, localStorage에서 polylinePath와 startLocation 삭제
+        localStorage.removeItem("startLocation");
+        localStorage.removeItem("polylinePath");
+        
         window.location.href = "/record";
     };
 
