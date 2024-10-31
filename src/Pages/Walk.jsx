@@ -17,6 +17,7 @@ const Walk = () => {
     const [polylinePath, setPolylinePath] = useState([]);
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
     const timerRef = useRef(null); // 타이머 관리용 useRef
+    const [previousPosition, setPreviousPosition] = useState(null);
 
     // 타이머 관리용 useEffect
     useEffect(() => {
@@ -58,8 +59,8 @@ const Walk = () => {
                     const { latitude, longitude } = position.coords;
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
 
-                    // 처음 위치에서 동네명 설정
-                    if (polylinePath.length === 0) {
+                    if (!previousPosition) {
+                        // 처음 위치에서 동네명 설정
                         const geocoder = new kakao.maps.services.Geocoder();
                         geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
                             if (status === kakao.maps.services.Status.OK) {
@@ -68,27 +69,18 @@ const Walk = () => {
                                 localStorage.setItem("startLocation", dongName); // 첫 위치 저장
                             }
                         });
+                        setPreviousPosition(newPos); // 초기 위치 설정
+                    } else {
+                        const distanceBetween = kakao.maps.services.Util.getDistance(previousPosition, newPos);
+                        if (distanceBetween >= 3) {
+                            setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
+                            setPreviousPosition(newPos); // 이전 위치를 현재 위치로 업데이트
+                        }
                     }
 
-                    // polylinePath에 현재 위치 추가하고 거리 업데이트
-                    setPolylinePath((prevPath) => {
-                        const updatedPath = [...prevPath, newPos];
-
-                        // 전체 경로 거리 계산
-                        if (updatedPath.length > 1) {
-                            const totalDistance = updatedPath.reduce((acc, cur, index, array) => {
-                                if (index === 0) return acc; // 첫 번째 요소는 건너뜀
-                                const prev = array[index - 1];
-                                if (prev && cur) {
-                                    // 이전 위치와 현재 위치 간의 거리 계산
-                                    return acc + kakao.maps.services.Util.getDistance(prev, cur);
-                                }
-                                return acc;
-                            }, 0);
-                            setDistance(totalDistance / 1000); // km 단위로 업데이트
-                        }
-
-                        if (mapInstance) {
+                    if (mapInstance) {
+                        setPolylinePath((prevPath) => {
+                            const updatedPath = [...prevPath, newPos];
                             let polyline = mapInstance.polyline;
                             if (!polyline) {
                                 polyline = new kakao.maps.Polyline({
@@ -104,10 +96,9 @@ const Walk = () => {
                                 polyline.setPath(updatedPath);
                             }
                             mapInstance.setCenter(newPos);
-                        }
-
-                        return updatedPath;
-                    });
+                            return updatedPath;
+                        });
+                    }
                 },
                 (error) => console.error("Error in getting geolocation: ", error),
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
