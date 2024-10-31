@@ -76,10 +76,14 @@ const Walk = () => {
 
                         // 전체 경로 거리 계산
                         if (updatedPath.length > 1) {
-                            const totalDistance = updatedPath.reduce((acc, cur, index) => {
-                                if (index === 0) return acc;
-                                const prev = updatedPath[index - 1];
-                                return acc + kakao.maps.services.Util.getDistance(prev, cur);
+                            const totalDistance = updatedPath.reduce((acc, cur, index, array) => {
+                                if (index === 0) return acc; // 첫 번째 요소는 건너뜀
+                                const prev = array[index - 1];
+                                if (prev && cur) {
+                                    // 이전 위치와 현재 위치 간의 거리 계산
+                                    return acc + kakao.maps.services.Util.getDistance(prev, cur);
+                                }
+                                return acc;
                             }, 0);
                             setDistance(totalDistance / 1000); // km 단위로 업데이트
                         }
