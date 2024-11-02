@@ -31,8 +31,8 @@ const Walk = () => {
             const increaseDistanceRandomly = () => {
                 setDistance((prevDistance) => prevDistance + 0.01); // 거리 0.01km씩 증가
                 
-                // 다음 증가 시간을 3초에서 8초 사이로 랜덤하게 설정
-                const randomInterval = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
+                // 다음 증가 시간을 5초에서 8초 사이로 랜덤하게 설정
+                const randomInterval = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
 
                 distanceRef.current = setTimeout(increaseDistanceRandomly, randomInterval); // 새로운 랜덤 타이머 설정
             };
