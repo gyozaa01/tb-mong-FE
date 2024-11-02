@@ -17,6 +17,7 @@ const Walk = () => {
     const [polylinePath, setPolylinePath] = useState([]);
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
     const timerRef = useRef(null); // 타이머 관리용 useRef
+    const distanceRef = useRef(null); // 거리 증가 관리용 useRef
     const [previousPosition, setPreviousPosition] = useState(null);
 
     // 타이머 관리용 useEffect
@@ -25,12 +26,29 @@ const Walk = () => {
             timerRef.current = setInterval(() => {
                 setTime((prevTime) => prevTime + 1); // 타이머 1초씩 증가
             }, 1000);
+
+            // 랜덤한 간격으로 거리 증가 함수 호출
+            const increaseDistanceRandomly = () => {
+                setDistance((prevDistance) => prevDistance + 0.01); // 거리 0.01km씩 증가
+                
+                // 다음 증가 시간을 3초에서 8초 사이로 랜덤하게 설정
+                const randomInterval = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
+
+                distanceRef.current = setTimeout(increaseDistanceRandomly, randomInterval); // 새로운 랜덤 타이머 설정
+            };
+
+            increaseDistanceRandomly(); // 처음 호출
         } else {
             clearInterval(timerRef.current);
+            clearTimeout(distanceRef.current);
         }
 
-        return () => clearInterval(timerRef.current); // Cleanup
+        return () => {
+            clearInterval(timerRef.current);
+            clearTimeout(distanceRef.current);
+        }; // Cleanup
     }, [isTracking]);
+
 
     // 카카오 맵 초기화 함수
     const initializeMap = () => {
