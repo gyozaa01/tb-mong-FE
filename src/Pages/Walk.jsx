@@ -71,8 +71,11 @@ const Walk = () => {
                         });
                         setPreviousPosition(newPos); // 초기 위치 설정
                     } else {
-                        // 모든 이동 거리를 누적하여 업데이트
-                        const distanceBetween = kakao.maps.services.Util.getDistance(previousPosition, newPos);
+                        // 두 위치 간의 거리 계산
+                        const polyline = new kakao.maps.Polyline({
+                            path: [previousPosition, newPos],
+                        });
+                        const distanceBetween = polyline.getLength(); // 거리 계산
                         setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
                         setPreviousPosition(newPos); // 이전 위치를 현재 위치로 업데이트
                     }
@@ -305,6 +308,7 @@ const Input = styled.input`
     background-color: transparent;
     border: none;
     color: black;
+    font-family: DNFBitBitv2;
 `;
 
 const LocationWrapper = styled.div`
