@@ -17,8 +17,7 @@ const Walk = () => {
     const [polylinePath, setPolylinePath] = useState([]);
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
     const timerRef = useRef(null); // 타이머 관리용 useRef
-    const distanceRef = useRef(null); // 거리 증가 관리용 useRef
-    const [previousPosition, setPreviousPosition] = useState(null);
+    const [previousPosition, setPreviousPosition] = useState(null); // 이전 위치 저장
 
     // 타이머 관리용 useEffect
     useEffect(() => {
@@ -26,29 +25,28 @@ const Walk = () => {
             timerRef.current = setInterval(() => {
                 setTime((prevTime) => prevTime + 1); // 타이머 1초씩 증가
             }, 1000);
-
-            // 랜덤한 간격으로 거리 증가 함수 호출
-            const increaseDistanceRandomly = () => {
-                setDistance((prevDistance) => prevDistance + 0.01); // 거리 0.01km씩 증가
-                
-                // 다음 증가 시간을 5초에서 8초 사이로 랜덤하게 설정
-                const randomInterval = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
-
-                distanceRef.current = setTimeout(increaseDistanceRandomly, randomInterval); // 새로운 랜덤 타이머 설정
-            };
-
-            increaseDistanceRandomly(); // 처음 호출
         } else {
             clearInterval(timerRef.current);
-            clearTimeout(distanceRef.current);
         }
 
         return () => {
             clearInterval(timerRef.current);
-            clearTimeout(distanceRef.current);
         }; // Cleanup
     }, [isTracking]);
 
+    // 두 위치 간 거리 계산 함수
+    const calculateDistance = (pos1, pos2) => {
+        const R = 6371; // 지구 반경 (킬로미터)
+        const dLat = (pos2.latitude - pos1.latitude) * Math.PI / 180;
+        const dLon = (pos2.longitude - pos1.longitude) * Math.PI / 180;
+        const lat1 = pos1.latitude * Math.PI / 180;
+        const lat2 = pos2.latitude * Math.PI / 180;
+
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c; // 거리 (킬로미터) 반환
+    };
 
     // 카카오 맵 초기화 함수
     const initializeMap = () => {
@@ -87,17 +85,15 @@ const Walk = () => {
                                 localStorage.setItem("startLocation", dongName); // 첫 위치 저장
                             }
                         });
-                        setPreviousPosition(newPos); // 초기 위치 설정
-                    } else {
-                        // 두 위치 간의 거리 계산
-                        const polyline = new kakao.maps.Polyline({
-                            path: [previousPosition, newPos],
-                        });
-                        const distanceBetween = polyline.getLength(); // 거리 계산
-                        setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
-                        setPreviousPosition(newPos); // 이전 위치를 현재 위치로 업데이트
                     }
-
+    
+                    // 이전 위치와의 거리 계산 및 업데이트
+                    if (previousPosition) {
+                        const segmentDistance = calculateDistance(previousPosition, { latitude, longitude });
+                        setDistance((prev) => prev + segmentDistance); // 누적 거리 업데이트
+                    }
+                    setPreviousPosition({ latitude, longitude }); // 현재 위치를 이전 위치로 저장
+    
                     if (mapInstance) {
                         setPolylinePath((prevPath) => {
                             const updatedPath = [...prevPath, newPos];
@@ -123,7 +119,7 @@ const Walk = () => {
                 (error) => console.error("Error in getting geolocation: ", error),
                 { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
             );
-
+    
             return () => navigator.geolocation.clearWatch(watchId); // 추적 중지 시 watchPosition 해제
         } else {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
@@ -282,7 +278,6 @@ const PolylineMap = ({ polylinePath }) => {
     return <SaveMapWrapper id="save-map" />;
 };
 
-// Styled Components
 const Container = styled.div`
     display: flex;
     justify-content: center;
