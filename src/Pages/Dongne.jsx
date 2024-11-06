@@ -70,84 +70,41 @@ const getTopUserForNeighborhood = (neighborhood) => {
 const WRAPPER_WIDTH = '375px';
 
 const Dongne = () => {
-    const [selectedNeighborhood, setSelectedNeighborhood] = useState('우산동');
+    const [selectedNeighborhood] = useState('우산동'); // 초기 동네명을 표시할 변수
     const [sortOption, setSortOption] = useState('like');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [inputNeighborhood, setInputNeighborhood] = useState('');  // 직접 입력한 동네명 저장
-    const [topUser, setTopUser] = useState(getTopUserForNeighborhood('우산동')); // 1위 유저 상태 저장
-    const [errorMessage, setErrorMessage] = useState('');  // 에러 메시지 상태 저장
-
-    // 동네 검색 모달 열기
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
-    };
-
-    // 동네 검색 모달 닫기
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setErrorMessage('');  // 모달을 닫으면 에러 메시지 초기화
-    };
-
-    // 동네 선택 후 저장하기
-    const handleSaveNeighborhood = () => {
-        if (inputNeighborhood) {
-            // '동'으로 끝나는지 확인
-            if (!inputNeighborhood.endsWith('동')) {
-                setErrorMessage('동네명은 "동"으로 끝나야 합니다.');
-                return;
-            }
-            console.log('동네 저장 중:', inputNeighborhood);  // 저장 전 로그
-            setSelectedNeighborhood(inputNeighborhood);  // 입력한 동네명 저장
-            setTopUser(getTopUserForNeighborhood(inputNeighborhood)); // 해당 동네의 1위 유저 설정
-            setErrorMessage('');  // 성공적으로 저장되면 에러 메시지 초기화
-        } else {
-            setErrorMessage('동네명을 입력해주세요.');
-        }
-        setIsModalOpen(false);
-    };
+    const topUser = getTopUserForNeighborhood(selectedNeighborhood); // 초기 1위 유저 설정
 
     useEffect(() => {
-        console.log('필터링 전 현재 동네:', selectedNeighborhood);
-        console.log('검색어:', searchQuery);
-        console.log('정렬 옵션:', sortOption);
-
         let filtered = walkRecords;
 
         // 동네 필터링
         filtered = filtered.filter(record => record.location === selectedNeighborhood);
-        console.log(`동네 필터링 후 산책 기록 (${selectedNeighborhood}):`, filtered);
 
         // 검색어 필터링
         if (searchQuery) {
             filtered = filtered.filter(record => record.title.includes(searchQuery));
-            console.log(`검색어 필터링 후 산책 기록 (${searchQuery}):`, filtered);
         }
 
         // 정렬 필터링
         switch (sortOption) {
             case 'like':
                 filtered = filtered.sort((a, b) => b.likes - a.likes);
-                console.log('좋아요순 정렬 후:', filtered);
                 break;
             case 'recent':
                 filtered = filtered.sort((a, b) => b.likes - a.likes);
-                console.log('최신순 정렬 후:', filtered);
                 break;
             case 'my_likes':
                 filtered = filtered.filter(record => record.likes > 10);
-                console.log('내가 찜한 산책로 필터링 후:', filtered);
                 break;
             case 'my_walks':
                 filtered = filtered.filter(record => record.distance > 3);
-                console.log('내가 한 산책 필터링 후:', filtered);
                 break;
             default:
                 break;
         }
 
-        console.log('최종 필터링된 기록:', filtered);
         setFilteredRecords(filtered);
     }, [selectedNeighborhood, sortOption, searchQuery]);
 
@@ -164,17 +121,8 @@ const Dongne = () => {
 
             <DropdownSection>
                 <LeftDropdown>
-                    <button onClick={handleOpenModal}>{selectedNeighborhood}</button>
-                    {isModalOpen && (
-                        <NeighborhoodModal 
-                        onClose={handleCloseModal} 
-                        onSave={handleSaveNeighborhood} 
-                        setInputNeighborhood={setInputNeighborhood}
-                        errorMessage={errorMessage}
-                        />
-                    )}
+                    <NeighborhoodLabel>{selectedNeighborhood}</NeighborhoodLabel>
                 </LeftDropdown>
-
                 <RightDropdown>
                     <select onChange={(e) => setSortOption(e.target.value)}>
                         <option value="like">좋아요순</option>
@@ -237,36 +185,6 @@ const Dongne = () => {
     );
 };
 
-// 동네 검색 모달 컴포넌트
-const NeighborhoodModal = ({ onClose, onSave, setInputNeighborhood, errorMessage }) => {
-    const [inputValue, setInputValue] = useState('');
-
-    return (
-        <ModalOverlay>
-            <ModalContent>
-                <input 
-                    type="text" 
-                    value={inputValue} 
-                    onChange={(e) => {
-                        setInputValue(e.target.value);
-                        setInputNeighborhood(e.target.value);
-                    }} 
-                    placeholder="동네명을 입력하세요" 
-                />
-                {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-                <button onClick={onSave}>저장하기</button>
-                <button onClick={onClose}>닫기</button>
-            </ModalContent>
-        </ModalOverlay>
-    );
-};
-
-const ErrorMessage = styled.p`
-    color: red;
-    font-size: 12px;
-    margin-top: 5px;
-`;
-
 const Container = styled.div`
     display: flex;
     justify-content: center;
@@ -317,14 +235,17 @@ const DropdownSection = styled.div`
 `;
 
 const LeftDropdown = styled.div`
-    button {
-        font-size: 14px;
-        padding: 5px 10px;
-        font-family:'DNFBitBitv2';
-        background-color: white;
-        border: 2px solid #51B47D;
-        border-radius: 15px;
-    }
+    display: flex;
+    align-items: center;
+`;
+
+const NeighborhoodLabel = styled.span`
+    font-size: 14px;
+    padding: 5px 10px;
+    font-family:'DNFBitBitv2';
+    background-color: white;
+    border: 2px solid #51B47D;
+    border-radius: 15px;
 `;
 
 const RightDropdown = styled.div`
@@ -460,46 +381,6 @@ const StyledBottomNav = styled(BottomNav)`
     background-color: #fff;
     box-shadow: 0px -2px 10px rgba(0, 0, 0, 0.1);
     padding: 10px 0;
-`;
-
-const ModalOverlay = styled.div`
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-`;
-
-const ModalContent = styled.div`
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 300px;
-
-    input {
-        width: 90%;
-        padding: 10px;
-        margin-bottom: 10px;
-        font-size: 14px;
-        border: 1px solid #ddd;
-        font-family:'DNFBitBitv2';
-    }
-
-    button {
-        width: 100%;
-        padding: 10px;
-        font-size: 14px;
-        background-color: #51B47D;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        margin-top: 10px;
-    }
 `;
 
 export default Dongne;
