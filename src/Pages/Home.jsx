@@ -39,8 +39,8 @@ const Home = () => {
                         <span>TOTAL</span>
                     </StatItem>
                     <StatItem>
-                        <img src="/b2.png" alt="Total" />
-                        <span>TOTAL KM</span>
+                        <img src="/b2.png" alt="Total" className='b2' />
+                        <span className='totalkm'>TOTAL KM</span>
                     </StatItem>
                 </Stats>
 
@@ -122,6 +122,16 @@ const StatItem = styled.div`
         width: 30px;
         height: 30px;
         margin-right: 5px;
+    }
+    
+    .b2 {
+        width: 25px;
+        height: 25px;
+        margin-left: 3px;
+    }
+
+    span.totalkm{
+        margin-left: 2px;
     }
 `;
 
