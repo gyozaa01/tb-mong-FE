@@ -9,6 +9,7 @@ const WRAPPER_WIDTH = '375px';
 const DongneSetting = () => {
   const [currentLocation, setCurrentLocation] = useState({ lat: 37.5665, lng: 126.9780 }); // 초기값
   const [dongName, setDongName] = useState(''); // 현재 동네 이름
+  const [locationCode, setLocationCode] = useState(''); // 법정동 코드
   const navigate = useNavigate(); // 페이지 이동을 위한 훅
   const location = useLocation();
   const kakaoAccessToken = location.state?.token; // Auth 페이지에서 전달된 kakaoAccessToken
@@ -23,12 +24,13 @@ const DongneSetting = () => {
     mapInstance.setCenter(markerPosition); // 지도 중심을 마커 위치로 설정
   }, [currentLocation]);
 
-  // 주소 가져오기 함수
+  // 주소 및 법정동 코드 가져오기 함수
   const fetchAddress = useCallback((mapInstance) => {
     const geocoder = new kakao.maps.services.Geocoder();
     geocoder.coord2Address(currentLocation.lng, currentLocation.lat, (result, status) => {
       if (status === kakao.maps.services.Status.OK) {
         setDongName(result[0].address.region_3depth_name);
+        setLocationCode(result[0].address.b_code); // 법정동 코드 저장
       } else {
         setDongName("동네를 찾을 수 없습니다.");
       }
@@ -87,6 +89,7 @@ const DongneSetting = () => {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ lat: latitude, lng: longitude });
           setDongName(''); // 동네명도 초기화
+          setLocationCode(''); // 법정동코드도 초기화
         },
         (error) => {
           console.error("현재 위치를 불러오는 중 오류가 발생했습니다:", error);
@@ -104,13 +107,13 @@ const DongneSetting = () => {
     // API 호출을 통해 회원가입
     api.post('/api/auth/signup', {
       kakaoAccessToken: kakaoAccessToken,
-      locationCode: dongName,
+      locationCode: locationCode, // 법정동 코드 사용
     })
     .then(response => {
       if (response.data.jwtToken) {
         sessionStorage.setItem('jwt_token', response.data.jwtToken);
-        sessionStorage.setItem('userId', response.data.userId); // userId 저장
-        navigate('/home'); // 홈 화면으로 이동
+        sessionStorage.setItem('userId', response.data.userId);
+        navigate('/home');
       } else {
         console.error('회원가입 응답 오류:', response.data);
       }
