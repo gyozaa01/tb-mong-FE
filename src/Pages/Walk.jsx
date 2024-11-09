@@ -143,7 +143,7 @@ const Walk = () => {
         if (!canvas) return; // canvas가 존재하는지 확인
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
+        
         ctx.beginPath();
         polylinePath.forEach((point, index) => {
             const { Ma, La } = point;
@@ -156,12 +156,13 @@ const Walk = () => {
         ctx.strokeStyle = "#FF0000";
         ctx.lineWidth = 2;
         ctx.stroke();
-    
-        html2canvas(canvas).then((canvas) => {
+        
+        html2canvas(canvas, { useCORS: true }).then((canvas) => {  // useCORS 옵션 추가
             const imageData = canvas.toDataURL("image/png");
+            console.log("Captured Image Data:", imageData); // 캡처된 이미지 데이터 확인
             setMapImage(imageData);
         });
-    };    
+    };       
 
     // 산책 종료
     const stopTracking = () => {
