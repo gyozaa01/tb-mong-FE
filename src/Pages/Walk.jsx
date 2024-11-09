@@ -139,11 +139,15 @@ const Walk = () => {
 
     // Polyline 경로를 캔버스에 그리기 및 캡처
     const captureCanvasPolyline = () => {
+        console.log("Capture function called"); // 함수 실행 확인 로그
         const canvas = canvasRef.current;
-        if (!canvas) return; // canvas가 존재하는지 확인
+        if (!canvas) {
+            console.error("Canvas not found");
+            return;
+        }
         const ctx = canvas.getContext("2d");
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+    
         ctx.beginPath();
         polylinePath.forEach((point, index) => {
             const { Ma, La } = point;
@@ -156,13 +160,15 @@ const Walk = () => {
         ctx.strokeStyle = "#FF0000";
         ctx.lineWidth = 2;
         ctx.stroke();
-        
-        html2canvas(canvas, { useCORS: true }).then((canvas) => {  // useCORS 옵션 추가
+    
+        html2canvas(canvas, { useCORS: true }).then((canvas) => {
             const imageData = canvas.toDataURL("image/png");
             console.log("Captured Image Data:", imageData); // 캡처된 이미지 데이터 확인
             setMapImage(imageData);
+        }).catch((error) => {
+            console.error("Error capturing canvas:", error);
         });
-    };       
+    };
 
     // 산책 종료
     const stopTracking = () => {
