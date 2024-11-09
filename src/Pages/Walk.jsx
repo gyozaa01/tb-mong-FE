@@ -2,7 +2,6 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
-import html2canvas from 'html2canvas';
 
 /*global kakao*/
 
@@ -24,7 +23,9 @@ const Walk = () => {
     const distanceUpdateRef = useRef(null); // 주기적으로 거리 업데이트를 수행하기 위한 ref
     const watchIdRef = useRef(null); // 위치 추적을 위한 watchId 저장
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
-    const canvasRef = useRef(null); // 캔버스 ref
+
+    const CANVAS_SIZE = 300;
+    const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
 
     // 시각적 시간을 1초마다 증가시키기 위한 useEffect
     useEffect(() => {
@@ -137,60 +138,91 @@ const Walk = () => {
         }
     };
 
-    // Polyline 경로를 캔버스에 그리기 및 캡처
-    const captureCanvasPolyline = () => {
-        setTimeout(() => { // 약간의 지연을 주어 캔버스가 렌더링되도록 보장
-            console.log("Capture function called"); // 함수 실행 확인 로그
-            const canvas = canvasRef.current;
-            if (!canvas) {
-                console.error("Canvas not found");
-                return;
-            }
-            const ctx = canvas.getContext("2d");
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-            ctx.beginPath();
-            polylinePath.forEach((point, index) => {
-                const { Ma, La } = point;
-                if (index === 0) {
-                    ctx.moveTo(La, Ma);
+    // 경로를 캔버스에 그려주는 함수
+    const drawPath = (path) => {
+        let [minLat, maxLat, minLng, maxLng] = [Infinity, -Infinity, Infinity, -Infinity];
+
+        for (const p of path) {
+            minLat = Math.min(minLat, p.lat);
+            maxLat = Math.max(maxLat, p.lat);
+            minLng = Math.min(minLng, p.lng);
+            maxLng = Math.max(maxLng, p.lng);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
+
+        const scaleX = (canvas.width - CANVAS_OFFSET * 2) / (maxLng - minLng);
+        const scaleY = (canvas.height - CANVAS_OFFSET * 1.5) / (maxLat - minLat);
+
+        const pathCanvas = canvas.getContext("2d");
+
+        if (pathCanvas) {
+            pathCanvas.fillStyle = "#e0e0e0"; // 배경색
+            pathCanvas.fillRect(0, 0, canvas.width, canvas.height);
+
+            pathCanvas.strokeStyle = "#00a878"; // 경로 색상
+            pathCanvas.lineJoin = "round";
+            pathCanvas.lineCap = "round";
+            pathCanvas.lineWidth = 7;
+            pathCanvas.font = "16px Arial";
+
+            pathCanvas.beginPath();
+
+            for (let i = 0; i < path.length; i++) {
+                let x, y;
+
+                // 좌표 스케일링
+                if (path.length === 1) {
+                    x = canvas.width / 2;
+                    y = canvas.height / 2;
                 } else {
-                    ctx.lineTo(La, Ma);
+                    x = CANVAS_OFFSET + (path[i].lng - minLng) * scaleX;
+                    y = canvas.height - CANVAS_OFFSET - (path[i].lat - minLat) * scaleY;
                 }
-            });
-            ctx.strokeStyle = "#FF0000";
-            ctx.lineWidth = 2;
-            ctx.stroke();
-        
-            html2canvas(canvas, { useCORS: true }).then((canvas) => {
-                const imageData = canvas.toDataURL("image/png");
-                console.log("Captured Image Data:", imageData); // 캡처된 이미지 데이터 확인
-                setMapImage(imageData);
-            }).catch((error) => {
-                console.error("Error capturing canvas:", error);
-            });
-        }, 500); // 500ms 지연
-    };    
+
+                // 경로 그리기
+                if (i === 0) {
+                    pathCanvas.moveTo(x, y);
+                } else {
+                    pathCanvas.lineTo(x, y);
+                }
+            }
+
+            pathCanvas.stroke();
+
+            // 시작과 끝 지점에 아이콘 표시
+            const [startX, startY] = [
+                CANVAS_OFFSET + (path[0].lng - minLng) * scaleX,
+                canvas.height - CANVAS_OFFSET - (path[0].lat - minLat) * scaleY,
+            ];
+
+            const [endX, endY] = [
+                CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
+                canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
+            ];
+
+            pathCanvas.beginPath();
+            pathCanvas.arc(startX, startY, 6, 0, Math.PI * 2, false);
+            pathCanvas.arc(endX, endY, 6, 0, Math.PI * 2, false);
+
+            pathCanvas.fillStyle = "#00a878"; // 시작/끝점 색상
+            pathCanvas.fill();
+
+            pathCanvas.fillText("👟", startX, startY);
+            pathCanvas.fillText("⛳️", endX, endY);
+        }
+
+        return canvas.toDataURL("image/png");
+    };
 
     // 산책 종료
     const stopTracking = () => {
-        console.log("Tracking stopped."); // 확인용 로그
         setIsTracking(false);
         setShowEndScreen(true);
-        
-        // 거리 및 위치 업데이트 중지
-        if (watchIdRef.current !== null) {
-            navigator.geolocation.clearWatch(watchIdRef.current);
-            watchIdRef.current = null;
-            console.log("watchPosition stopped."); // 확인용 로그
-        }
-        if (distanceUpdateRef.current) {
-            clearInterval(distanceUpdateRef.current);
-            distanceUpdateRef.current = null;
-            console.log("Interval cleared."); // 확인용 로그
-        }
-
-        captureCanvasPolyline(); // 캔버스 캡처 실행
+        const pathDataUrl = drawPath(polylinePath);
+        setMapImage(pathDataUrl); // 경로 이미지 설정
     };
 
     const handleStartClick = () => {
@@ -245,9 +277,9 @@ const Walk = () => {
                             <LocationName>{location}</LocationName> {/* 저장된 위치 출력 */}
                         </LocationWrapper>
                         {mapImage ? (
-                            <img src={mapImage} alt="산책 경로 캡처" /> // 캡처된 이미지 표시
+                            <img src={mapImage} alt="산책 경로 캡처" />
                         ) : (
-                            <canvas ref={canvasRef} width="375" height="375" style={{ display: "none" }} />
+                            <div>경로 이미지가 없습니다.</div>
                         )}
                         <SummaryBox>
                             <SummaryRow>
