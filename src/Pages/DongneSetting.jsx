@@ -1,7 +1,8 @@
 /*global kakao*/
 import React, { useEffect, useState, useCallback } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import api from './Api';
 
 const WRAPPER_WIDTH = '375px';
 
@@ -9,6 +10,8 @@ const DongneSetting = () => {
   const [currentLocation, setCurrentLocation] = useState({ lat: 37.5665, lng: 126.9780 }); // 초기값
   const [dongName, setDongName] = useState(''); // 현재 동네 이름
   const navigate = useNavigate(); // 페이지 이동을 위한 훅
+  const location = useLocation();
+  const kakaoAccessToken = location.state?.token; // Auth 페이지에서 전달된 kakaoAccessToken
 
   // 마커를 생성하는 함수
   const createMarker = useCallback((mapInstance) => {
@@ -93,8 +96,28 @@ const DongneSetting = () => {
   };
 
   const handleSave = () => {
-    console.log('동네 정보 저장:', { dongName });
-    navigate('/home');
+    if (!kakaoAccessToken) {
+      console.error("카카오 토큰이 없습니다.");
+      return;
+    }
+
+    // API 호출을 통해 회원가입
+    api.post('/api/auth/signup', {
+      kakaoAccessToken: kakaoAccessToken,
+      locationCode: dongName,
+    })
+    .then(response => {
+      if (response.data.jwtToken) {
+        sessionStorage.setItem('jwt_token', response.data.jwtToken);
+        sessionStorage.setItem('userId', response.data.userId); // userId 저장
+        navigate('/home'); // 홈 화면으로 이동
+      } else {
+        console.error('회원가입 응답 오류:', response.data);
+      }
+    })
+    .catch(err => {
+      console.error('회원가입 중 오류 발생:', err);
+    });
   };
 
   return (

@@ -20,6 +20,7 @@ const Auth = () => {
       })
       .then(response => {
         if (response.data.code === 401) {
+          // 401 에러일 경우 dongne-setting 페이지로 이동하여 locationCode 입력받기
           navigate('/dongne-setting', { state: { token } });
         } else if (response.data.jwtToken) {
           sessionStorage.setItem('jwt_token', response.data.jwtToken);
