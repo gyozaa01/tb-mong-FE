@@ -9,34 +9,33 @@ const Auth = () => {
 
   useEffect(() => {
     const params = new URL(window.location.href).searchParams;
-    const code = params.get('code'); // 인가 코드 추출
-    const error = params.get('error'); // 에러 여부 확인
+    const code = params.get('code');
+    const error = params.get('error');
 
-    const checkUserStatus = (token) => {
-      console.log("카카오 Access Token:", token); // 디버깅용 콘솔 로그 추가
-      api.post('/api/auth/kakao', {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then(response => {
-        if (response.data.code === 401) {
-          // 401 에러일 경우 dongne-setting 페이지로 이동하여 locationCode 입력받기
-          navigate('/dongne-setting', { state: { token } });
-        } else if (response.data.jwtToken) {
-          sessionStorage.setItem('jwt_token', response.data.jwtToken);
-          sessionStorage.setItem('userId', response.data.userId); // userId 저장
+    const checkUserStatus = async (kakaoAccessToken) => {
+      try {
+        const response = await api.get('/api/auth/kakao', {
+          params: { kakaoAccessToken },
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+          },
+        });
+        
+        // JWT 토큰을 반환받은 경우
+        if (response.data) {
+          sessionStorage.setItem('jwt_token', response.data);
           navigate('/home');
         } else {
           console.error('예상치 못한 응답:', response.data);
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('사용자 정보 확인 중 오류 발생:', err);
-      })
-      .finally(() => {
+        if (err.response && err.response.status === 401) {
+          navigate('/dongne-setting', { state: { kakaoAccessToken } });
+        }
+      } finally {
         setIsLoading(false);
-      });      
+      }
     };
 
     if (code) {
@@ -44,9 +43,9 @@ const Auth = () => {
 
       const bodyData = new URLSearchParams({
         grant_type: 'authorization_code',
-        client_id: process.env.REACT_APP_KAKAO_REST_API_KEY, // REST API 키 사용
-        redirect_uri: 'https://tb-mong-fe.vercel.app/auth', // 리디렉트 URI
-        code: code, // 발급된 인가 코드
+        client_id: process.env.REACT_APP_KAKAO_REST_API_KEY,
+        redirect_uri: 'https://tb-mong-fe.vercel.app/auth',
+        code: code,
       });
 
       fetch(tokenUrl, {
@@ -56,24 +55,19 @@ const Auth = () => {
         },
         body: bodyData,
       })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`카카오 API 오류: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        if (data.access_token) {
-          checkUserStatus(data.access_token);
-        } else {
-          console.error('카카오 API 오류:', data);
+        .then(response => response.json())
+        .then(data => {
+          if (data.access_token) {
+            checkUserStatus(data.access_token);
+          } else {
+            console.error('카카오 API 오류:', data);
+            setIsLoading(false);
+          }
+        })
+        .catch(err => {
+          console.error('토큰 요청 중 오류 발생:', err);
           setIsLoading(false);
-        }
-      })
-      .catch(err => {
-        console.error('토큰 요청 중 오류 발생:', err);
-        setIsLoading(false);
-      });
+        });
     } else if (error) {
       console.error('카카오 로그인 실패:', error);
       setIsLoading(false);
