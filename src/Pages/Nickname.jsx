@@ -1,28 +1,29 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
+import api from './Api';
 
 const WRAPPER_WIDTH = '375px';
 
 const Nickname = () => {
     const [nickname, setNickname] = useState('');
-    const [isDuplicate, setIsDuplicate] = useState(null); 
     const navigate = useNavigate();
 
-    const handleCheckDuplicate = () => {
-        if (nickname === '중복닉네임') {
-            setIsDuplicate(true);
-        } else {
-            setIsDuplicate(false);
-        }
-    };
+    const handleSave = async () => {
+        try {
+            const response = await api.post('/api/settings/set-nickname', null, {
+                params: { newNickname: nickname },
+            });
 
-    const handleSave = () => {
-        if (!isDuplicate) {
-            alert("닉네임이 저장되었습니다.");
-            navigate('/home');
-        } else {
-            alert("중복된 닉네임입니다. 다른 닉네임을 입력해주세요.");
+            if (response.status === 200) {
+                alert("닉네임이 저장되었습니다.");
+                navigate('/home');
+            } else {
+                console.error("닉네임 설정 실패:", response);
+            }
+        } catch (error) {
+            console.error("닉네임 설정 중 오류 발생:", error);
+            alert("닉네임 설정 중 오류가 발생했습니다.");
         }
     };
 
@@ -43,10 +44,8 @@ const Nickname = () => {
                             onChange={(e) => setNickname(e.target.value)}
                             placeholder="닉네임을 입력하세요"
                         />
-                        <CheckButton onClick={handleCheckDuplicate}>중복확인</CheckButton>
+                        {/* <CheckButton>중복확인</CheckButton> */}
                     </InputWrapper>
-                    {isDuplicate === true && <ErrorMessage>이미 사용 중인 닉네임입니다.</ErrorMessage>}
-                    {isDuplicate === false && <SuccessMessage>사용 가능한 닉네임입니다.</SuccessMessage>}
 
                     <SaveButton onClick={handleSave}>
                         <img src="/save.png" alt="저장" />
@@ -57,7 +56,6 @@ const Nickname = () => {
     );
 };
 
-// 스타일 컴포넌트들
 const Container = styled.div`
     display: flex;
     justify-content: center;
@@ -152,28 +150,17 @@ const NicknameInput = styled.input`
     font-family: DNFBitBitv2;
     color: black;
 `;
-
-const CheckButton = styled.button`
-    padding: 8px 20px;
-    background-color: white;
-    color: black;
-    border: 2px solid green;
-    border-radius: 50px;
-    cursor: pointer;
-    font-size: 14px;
-    font-family: DNFBitBitv2;
-    white-space: nowrap;
-`;
-
-const ErrorMessage = styled.p`
-    color: white;
-    font-size: 14px;
-`;
-
-const SuccessMessage = styled.p`
-    color: white;
-    font-size: 14px;
-`;
+// const CheckButton = styled.button`
+//     padding: 8px 20px;
+//     background-color: white;
+//     color: black;
+//     border: 2px solid green;
+//     border-radius: 50px;
+//     cursor: pointer;
+//     font-size: 14px;
+//     font-family: DNFBitBitv2;
+//     white-space: nowrap;
+// `;
 
 const SaveButton = styled.button`
     background: none;
