@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
+import html2canvas from 'html2canvas';
+
 /*global kakao*/
 
 const WRAPPER_WIDTH = '375px';
@@ -18,8 +20,10 @@ const Walk = () => {
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
     const previousPosition = useRef(null); // 이전 위치 저장용 ref
     const visualTimeRef = useRef(null); // 시각적으로 1초마다 시간 증가용
-    const updateInterval = 5000; // 거리 및 위치 업데이트 간격 (5초)
+    const updateInterval = 2000; // 거리 및 위치 업데이트 간격 (2초)
     const distanceUpdateRef = useRef(null); // 주기적으로 거리 업데이트를 수행하기 위한 ref
+    const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
+    const canvasRef = useRef(null); // 캔버스 ref
 
     // 시각적 시간을 1초마다 증가시키기 위한 useEffect
     useEffect(() => {
@@ -138,10 +142,37 @@ const Walk = () => {
         }
     };
 
+    // Polyline 경로를 캔버스에 그리기 및 캡처
+    const captureCanvasPolyline = () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return; // canvas가 존재하는지 확인
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+        ctx.beginPath();
+        polylinePath.forEach((point, index) => {
+            const { Ma, La } = point;
+            if (index === 0) {
+                ctx.moveTo(La, Ma);
+            } else {
+                ctx.lineTo(La, Ma);
+            }
+        });
+        ctx.strokeStyle = "#FF0000";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    
+        html2canvas(canvas).then((canvas) => {
+            const imageData = canvas.toDataURL("image/png");
+            setMapImage(imageData);
+        });
+    };    
+
     // 산책 종료
     const stopTracking = () => {
         setIsTracking(false);
         setShowEndScreen(true); // 종료 화면으로 전환
+        captureCanvasPolyline(); // 캔버스 캡처 실행
     };
 
     const handleStartClick = () => {
@@ -169,7 +200,6 @@ const Walk = () => {
         const seconds = time % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
-
     // 평균 페이스 계산
     const formatPace = () => {
         if (distance === 0) return "N/A"; // 거리 0일 때는 계산하지 않음
@@ -178,7 +208,6 @@ const Walk = () => {
         const paceSeconds = Math.floor(paceInSeconds % 60);
         return `${paceMinutes}' ${String(paceSeconds).padStart(2, '0')}''`; 
     };
-
     // 속도 계산
     const calculateSpeed = () => {
         if (time === 0 || distance === 0) return "N/A"; // 시간 또는 거리 0일 때는 계산하지 않음
@@ -197,7 +226,11 @@ const Walk = () => {
                             <LocationIcon src="/location.png" alt="location" />
                             <LocationName>{location}</LocationName> {/* 저장된 위치 출력 */}
                         </LocationWrapper>
-                        <PolylineMap polylinePath={polylinePath} />
+                        {mapImage ? (
+                            <img src={mapImage} alt="산책 경로 캡처" /> // 캡처된 이미지 표시
+                        ) : (
+                            <canvas ref={canvasRef} width="375" height="375" style={{ display: "none" }} />
+                        )}
                         <SummaryBox>
                             <SummaryRow>
                                 <SummaryItem>
@@ -265,31 +298,6 @@ const Walk = () => {
             </AppWrapper>
         </Container>
     );
-};
-
-const PolylineMap = ({ polylinePath }) => {
-    useEffect(() => {
-        if (window.kakao && window.kakao.maps) {
-            const mapContainer = document.getElementById('save-map');
-            const mapOption = {
-                center: new window.kakao.maps.LatLng(polylinePath[0].Ma, polylinePath[0].La),
-                level: 6,
-            };
-            const map = new window.kakao.maps.Map(mapContainer, mapOption);
-
-            const polyline = new window.kakao.maps.Polyline({
-                path: polylinePath,
-                strokeWeight: 3,
-                strokeColor: '#FF0000',
-                strokeOpacity: 0.7,
-                strokeStyle: 'solid',
-            });
-
-            polyline.setMap(map);
-        }
-    }, [polylinePath]);
-
-    return <SaveMapWrapper id="save-map" />;
 };
 
 // Styled Components
@@ -382,15 +390,6 @@ const SummaryItem = styled.div`
     flex-direction: column;
     align-items: center;
     justify-content: center;
-`;
-
-const SaveMapWrapper = styled.div`
-    width: 100%;
-    height: 40%;
-    background-color: #e5e5e5;
-    border: 1px solid #ddd;
-    margin-bottom: 20px;
-    border-radius: 10px;
 `;
 
 const TrackingMapWrapper = styled.div`
