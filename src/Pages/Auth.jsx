@@ -16,15 +16,12 @@ const Auth = () => {
       try {
         const response = await api.get('/api/auth/kakao', {
           params: { kakaoAccessToken },
-          headers: {
-            Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-          },
         });
         
-        // JWT 토큰을 반환받은 경우
+        // 서버로부터 jwt_token을 받은 경우 sessionStorage에 저장
         if (response.data) {
-          sessionStorage.setItem('jwt_token', response.data);
-          navigate('/home');
+          sessionStorage.setItem('jwt_token', response.data); // jwt_token 저장
+          navigate('/home'); // 홈 화면으로 이동
         } else {
           console.error('예상치 못한 응답:', response.data);
         }
@@ -37,7 +34,7 @@ const Auth = () => {
         setIsLoading(false);
       }
     };
-
+    
     if (code) {
       const tokenUrl = 'https://kauth.kakao.com/oauth/token';
 
