@@ -22,6 +22,7 @@ const Walk = () => {
     const visualTimeRef = useRef(null); // 시각적으로 1초마다 시간 증가용
     const updateInterval = 2000; // 거리 및 위치 업데이트 간격 (2초)
     const distanceUpdateRef = useRef(null); // 주기적으로 거리 업데이트를 수행하기 위한 ref
+    const watchIdRef = useRef(null); // 위치 추적을 위한 watchId 저장
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
     const canvasRef = useRef(null); // 캔버스 ref
 
@@ -60,7 +61,7 @@ const Walk = () => {
     const startTracking = () => {
         setIsTracking(true); // Tracking 시작 상태로 설정
         if (navigator.geolocation) {
-            const watchId = navigator.geolocation.watchPosition(
+            watchIdRef.current = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
@@ -131,12 +132,6 @@ const Walk = () => {
                     }
                 }
             }, updateInterval);
-
-            // 추적 중지 시 watchPosition 및 간격 업데이트 해제
-            return () => {
-                navigator.geolocation.clearWatch(watchId);
-                clearInterval(distanceUpdateRef.current);
-            };
         } else {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
         }
@@ -170,16 +165,24 @@ const Walk = () => {
 
     // 산책 종료
     const stopTracking = () => {
+        console.log("Tracking stopped."); // 확인용 로그
         setIsTracking(false);
         setShowEndScreen(true);
         
         // 거리 및 위치 업데이트 중지
-        if (distanceUpdateRef.current) clearInterval(distanceUpdateRef.current);
-        navigator.geolocation.clearWatch(previousPosition.current);
-        
-        // 캡처 함수 호출
-        captureCanvasPolyline();
-    };    
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+            console.log("watchPosition stopped."); // 확인용 로그
+        }
+        if (distanceUpdateRef.current) {
+            clearInterval(distanceUpdateRef.current);
+            distanceUpdateRef.current = null;
+            console.log("Interval cleared."); // 확인용 로그
+        }
+
+        captureCanvasPolyline(); // 캔버스 캡처 실행
+    };
 
     const handleStartClick = () => {
         setShowMap(true); // start.png 클릭 시 맵 표시
