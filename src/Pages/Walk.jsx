@@ -171,9 +171,15 @@ const Walk = () => {
     // 산책 종료
     const stopTracking = () => {
         setIsTracking(false);
-        setShowEndScreen(true); // 종료 화면으로 전환
-        captureCanvasPolyline(); // 캔버스 캡처 실행
-    };
+        setShowEndScreen(true);
+        
+        // 거리 및 위치 업데이트 중지
+        if (distanceUpdateRef.current) clearInterval(distanceUpdateRef.current);
+        navigator.geolocation.clearWatch(previousPosition.current);
+        
+        // 캡처 함수 호출
+        captureCanvasPolyline();
+    };    
 
     const handleStartClick = () => {
         setShowMap(true); // start.png 클릭 시 맵 표시
