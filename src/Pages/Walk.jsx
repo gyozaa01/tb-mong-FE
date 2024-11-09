@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
@@ -26,37 +26,6 @@ const Walk = () => {
 
     const CANVAS_SIZE = 350;
     const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
-
-    // Wake Lock 설정을 위한 ref
-    const wakeLockRef = useRef(null);
-
-    // Wake Lock 요청 함수
-    const requestWakeLock = async () => {
-        try {
-            wakeLockRef.current = await navigator.wakeLock.request('screen');
-            console.log("Wake Lock is active.");
-            wakeLockRef.current.addEventListener('release', () => {
-                console.log("Wake Lock was released");
-            });
-        } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
-        }
-    };
-
-    // 페이지가 비활성화되었다가 다시 활성화될 때 Wake Lock 요청
-    const handleVisibilityChange = useCallback(() => {
-        if (document.visibilityState === 'visible' && !wakeLockRef.current) {
-            requestWakeLock();
-        }
-    }, []);    
-
-    // 화면이 꺼지지 않도록 유지하는 useEffect
-    useEffect(() => {
-        document.addEventListener("visibilitychange", handleVisibilityChange);
-        return () => {
-            document.removeEventListener("visibilitychange", handleVisibilityChange);
-        };
-    }, [handleVisibilityChange]);
 
     // 시각적 시간을 1초마다 증가시키기 위한 useEffect
     useEffect(() => {
