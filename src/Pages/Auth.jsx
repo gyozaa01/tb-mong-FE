@@ -13,6 +13,7 @@ const Auth = () => {
     const error = params.get('error'); // 에러 여부 확인
 
     const checkUserStatus = (token) => {
+      console.log("카카오 Access Token:", token); // 디버깅용 콘솔 로그 추가
       api.post('/api/auth/kakao', {}, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -55,19 +56,24 @@ const Auth = () => {
         },
         body: bodyData,
       })
-        .then(response => response.json())
-        .then(data => {
-          if (data.access_token) {
-            checkUserStatus(data.access_token);
-          } else {
-            console.error('카카오 API 오류:', data);
-            setIsLoading(false);
-          }
-        })
-        .catch(err => {
-          console.error('토큰 요청 중 오류 발생:', err);
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`카카오 API 오류: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        if (data.access_token) {
+          checkUserStatus(data.access_token);
+        } else {
+          console.error('카카오 API 오류:', data);
           setIsLoading(false);
-        });
+        }
+      })
+      .catch(err => {
+        console.error('토큰 요청 중 오류 발생:', err);
+        setIsLoading(false);
+      });
     } else if (error) {
       console.error('카카오 로그인 실패:', error);
       setIsLoading(false);
