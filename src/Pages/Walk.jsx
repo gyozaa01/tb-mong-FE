@@ -24,7 +24,7 @@ const Walk = () => {
     const watchIdRef = useRef(null); // 위치 추적을 위한 watchId 저장
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
 
-    const CANVAS_SIZE = 300;
+    const CANVAS_SIZE = 350;
     const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
 
     // 시각적 시간을 1초마다 증가시키기 위한 useEffect
