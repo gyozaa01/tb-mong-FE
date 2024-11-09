@@ -1,23 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled, { keyframes } from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
+import api from './Api';
 
 const WRAPPER_WIDTH = '375px';
 
 const Home = () => {
     const [level, setLevel] = useState(1);
-    const [experience, setExperience] = useState(3); // 테스트용으로 3으로 설정
+    const [experience, setExperience] = useState(0);
+    const [characterImage, setCharacterImage] = useState('/mong1.png'); // 기본 이미지
+    const [stats, setStats] = useState({ today_cnt: 0, today_km: 0, total_cnt: 0, total_km: 0 });
     const [showModal, setShowModal] = useState(false);
 
-    const confirmLevelUp = () => {
-        setLevel(level + 1);
-        setExperience(0);
-        setShowModal(false);
+    useEffect(() => {
+        fetchCharacter();
+        fetchLevelExperience();
+        fetchWalkStats();
+    }, []);
+
+    const fetchCharacter = async () => {
+        try {
+            const response = await api.get('/api/home/repre-character');
+            setCharacterImage(response.data.characterImage);
+        } catch (error) {
+            console.error('대표 캐릭터를 가져오는 중 오류 발생:', error);
+        }
+    };
+
+    const fetchLevelExperience = async () => {
+        try {
+            const response = await api.get('/api/home/level');
+            setLevel(response.data.level);
+            setExperience(response.data.exp);
+        } catch (error) {
+            console.error('레벨 및 경험치를 가져오는 중 오류 발생:', error);
+        }
+    };
+
+    const fetchWalkStats = async () => {
+        try {
+            const response = await api.get('/api/home/info');
+            setStats(response.data);
+        } catch (error) {
+            console.error('산책 정보를 가져오는 중 오류 발생:', error);
+        }
     };
 
     const handleBalloonClick = () => {
         setShowModal(true);
+    };
+
+    const confirmLevelUp = async () => {
+        try {
+            const response = await api.post('/api/home/levelup');
+            setLevel(response.data.level);
+            setExperience(response.data.exp);
+        } catch (error) {
+            console.error('레벨업 처리 중 오류 발생:', error);
+        }
+        setShowModal(false);
     };
 
     return (
@@ -28,25 +70,25 @@ const Home = () => {
                 <Stats>
                     <StatItem>
                         <img src="/b1.png" alt="Today" />
-                        <span>TODAY</span>
+                        <span>TODAY: {stats.today_cnt}번</span>
                     </StatItem>
                     <StatItem>
                         <img src="/b4.png" alt="KM" />
-                        <span>KM</span>
+                        <span>KM: {stats.today_km}km</span>
                     </StatItem>
                     <StatItem>
                         <img src="/b3.png" alt="Total" />
-                        <span>TOTAL</span>
+                        <span>TOTAL: {stats.total_cnt}번</span>
                     </StatItem>
                     <StatItem>
                         <img src="/b2.png" alt="Total" className='b2' />
-                        <span className='totalkm'>TOTAL KM</span>
+                        <span className='totalkm'>TOTAL KM: {stats.total_km}km</span>
                     </StatItem>
                 </Stats>
 
                 <MainContent>
                     <CharacterContainer>
-                        <img src="/mong1.png" alt="메인 캐릭터" className="mong" />
+                        <img src={characterImage} alt="메인 캐릭터" className="mong" />
                         {experience === 3 && (
                             <Balloon onClick={handleBalloonClick}>
                                 <Exclamation>!</Exclamation>
