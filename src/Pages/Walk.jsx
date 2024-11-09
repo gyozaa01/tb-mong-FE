@@ -16,40 +16,21 @@ const Walk = () => {
     const [time, setTime] = useState(0); // 시간 (초 단위)
     const [polylinePath, setPolylinePath] = useState([]);
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
-    const timerRef = useRef(null); // 타이머 관리용 useRef
-    const distanceRef = useRef(null); // 거리 증가 관리용 useRef
-    const [previousPosition, setPreviousPosition] = useState(null);
+    const previousPosition = useRef(null);
+    const visualTimeRef = useRef(null); // 시각적으로 1초마다 시간 증가용
+    const updateInterval = 5000; // 거리 및 위치 업데이트 간격 (5초)
 
     // 타이머 관리용 useEffect
     useEffect(() => {
         if (isTracking) {
-            timerRef.current = setInterval(() => {
-                setTime((prevTime) => prevTime + 1); // 타이머 1초씩 증가
+            visualTimeRef.current = setInterval(() => {
+                setTime((prevTime) => prevTime + 1); // 시각적 시간 1초씩 증가
             }, 1000);
-
-            // 랜덤한 간격으로 거리 증가 함수 호출
-            const increaseDistanceRandomly = () => {
-                setDistance((prevDistance) => prevDistance + 0.01); // 거리 0.01km씩 증가
-                
-                // 다음 증가 시간을 5초에서 8초 사이로 랜덤하게 설정
-                const randomInterval = Math.floor(Math.random() * (8000 - 5000 + 1)) + 5000;
-
-                distanceRef.current = setTimeout(increaseDistanceRandomly, randomInterval); // 새로운 랜덤 타이머 설정
-            };
-
-            increaseDistanceRandomly(); // 처음 호출
         } else {
-            clearInterval(timerRef.current);
-            clearTimeout(distanceRef.current);
+            clearInterval(visualTimeRef.current);
         }
-
-        return () => {
-            clearInterval(timerRef.current);
-            clearTimeout(distanceRef.current);
-        }; // Cleanup
+        return () => clearInterval(visualTimeRef.current);
     }, [isTracking]);
-
-
     // 카카오 맵 초기화 함수
     const initializeMap = () => {
         const script = document.createElement("script");
@@ -77,7 +58,7 @@ const Walk = () => {
                     const { latitude, longitude } = position.coords;
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
 
-                    if (!previousPosition) {
+                    if (!previousPosition.current) {
                         // 처음 위치에서 동네명 설정
                         const geocoder = new kakao.maps.services.Geocoder();
                         geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
@@ -87,15 +68,18 @@ const Walk = () => {
                                 localStorage.setItem("startLocation", dongName); // 첫 위치 저장
                             }
                         });
-                        setPreviousPosition(newPos); // 초기 위치 설정
+                        previousPosition.current = newPos; // 초기 위치 설정
                     } else {
-                        // 두 위치 간의 거리 계산
-                        const polyline = new kakao.maps.Polyline({
-                            path: [previousPosition, newPos],
-                        });
-                        const distanceBetween = polyline.getLength(); // 거리 계산
-                        setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
-                        setPreviousPosition(newPos); // 이전 위치를 현재 위치로 업데이트
+                        const now = new Date();
+                        if (!previousPosition.current.time || now - previousPosition.current.time >= updateInterval) {
+                            // Polyline 경로 및 거리 계산
+                            const polyline = new kakao.maps.Polyline({
+                                path: [previousPosition.current, newPos],
+                            });
+                            const distanceBetween = polyline.getLength(); // 거리 계산
+                            setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
+                            previousPosition.current = { ...newPos, time: now }; // 이전 위치를 현재 위치로 업데이트
+                        }
                     }
 
                     if (mapInstance) {
@@ -121,7 +105,11 @@ const Walk = () => {
                     }
                 },
                 (error) => console.error("Error in getting geolocation: ", error),
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 0,
+                    timeout: 10000, // Timeout 값을 10초로 늘려 위치 정보를 얻기 위한 대기 시간을 증가
+                }
             );
 
             return () => navigator.geolocation.clearWatch(watchId); // 추적 중지 시 watchPosition 해제
@@ -152,7 +140,6 @@ const Walk = () => {
         // 산책 정보를 저장 후, localStorage에서 polylinePath와 startLocation 삭제
         localStorage.removeItem("startLocation");
         localStorage.removeItem("polylinePath");
-        
         window.location.href = "/record";
     };
 
