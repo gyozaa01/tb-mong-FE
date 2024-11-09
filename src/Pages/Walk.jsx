@@ -10,27 +10,30 @@ const Walk = () => {
     const [showMap, setShowMap] = useState(false); // 맵 표시 여부
     const [isTracking, setIsTracking] = useState(false); // 추적 상태 (start/pause)
     const [showEndScreen, setShowEndScreen] = useState(false); // 종료 화면 표시 여부
-    const [showSaveScreen, setShowSaveScreen] = useState(false);
+    const [showSaveScreen, setShowSaveScreen] = useState(false); // 저장 화면 표시 여부
     const [mapInstance, setMapInstance] = useState(null); // 카카오 맵 인스턴스
     const [distance, setDistance] = useState(0.0); // 이동 거리
     const [time, setTime] = useState(0); // 시간 (초 단위)
-    const [polylinePath, setPolylinePath] = useState([]);
+    const [polylinePath, setPolylinePath] = useState([]); // Polyline 경로를 저장하는 배열
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
-    const previousPosition = useRef(null);
+    const previousPosition = useRef(null); // 이전 위치 저장용 ref
     const visualTimeRef = useRef(null); // 시각적으로 1초마다 시간 증가용
     const updateInterval = 5000; // 거리 및 위치 업데이트 간격 (5초)
+    const distanceUpdateRef = useRef(null); // 주기적으로 거리 업데이트를 수행하기 위한 ref
 
-    // 타이머 관리용 useEffect
+    // 시각적 시간을 1초마다 증가시키기 위한 useEffect
     useEffect(() => {
         if (isTracking) {
+            // Tracking이 활성화되면 매 1초마다 시간을 증가시킴
             visualTimeRef.current = setInterval(() => {
                 setTime((prevTime) => prevTime + 1); // 시각적 시간 1초씩 증가
             }, 1000);
         } else {
-            clearInterval(visualTimeRef.current);
+            clearInterval(visualTimeRef.current); // Tracking이 중지되면 타이머 해제
         }
-        return () => clearInterval(visualTimeRef.current);
+        return () => clearInterval(visualTimeRef.current); // 컴포넌트가 언마운트될 때 타이머 해제
     }, [isTracking]);
+
     // 카카오 맵 초기화 함수
     const initializeMap = () => {
         const script = document.createElement("script");
@@ -51,13 +54,14 @@ const Walk = () => {
 
     // 실시간 위치 추적 시작
     const startTracking = () => {
-        setIsTracking(true);
+        setIsTracking(true); // Tracking 시작 상태로 설정
         if (navigator.geolocation) {
             const watchId = navigator.geolocation.watchPosition(
                 (position) => {
                     const { latitude, longitude } = position.coords;
                     const newPos = new kakao.maps.LatLng(latitude, longitude);
 
+                    // 최초 위치 설정
                     if (!previousPosition.current) {
                         // 처음 위치에서 동네명 설정
                         const geocoder = new kakao.maps.services.Geocoder();
@@ -70,18 +74,16 @@ const Walk = () => {
                         });
                         previousPosition.current = newPos; // 초기 위치 설정
                     } else {
-                        const now = new Date();
-                        if (!previousPosition.current.time || now - previousPosition.current.time >= updateInterval) {
-                            // Polyline 경로 및 거리 계산
-                            const polyline = new kakao.maps.Polyline({
-                                path: [previousPosition.current, newPos],
-                            });
-                            const distanceBetween = polyline.getLength(); // 거리 계산
-                            setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
-                            previousPosition.current = { ...newPos, time: now }; // 이전 위치를 현재 위치로 업데이트
-                        }
+                        // Polyline 경로 업데이트 및 거리 계산
+                        const polyline = new kakao.maps.Polyline({
+                            path: [previousPosition.current, newPos],
+                        });
+                        const distanceBetween = polyline.getLength(); // 두 위치 간의 거리 계산
+                        setDistance((prev) => prev + distanceBetween / 1000); // km 단위 거리 계산
+                        previousPosition.current = newPos; // 이전 위치를 현재 위치로 업데이트
                     }
 
+                    // Polyline 경로를 설정하고 맵에 반영
                     if (mapInstance) {
                         setPolylinePath((prevPath) => {
                             const updatedPath = [...prevPath, newPos];
@@ -99,7 +101,7 @@ const Walk = () => {
                             } else {
                                 polyline.setPath(updatedPath);
                             }
-                            mapInstance.setCenter(newPos);
+                            mapInstance.setCenter(newPos); // 맵의 중심을 현재 위치로 설정
                             return updatedPath;
                         });
                     }
@@ -112,7 +114,25 @@ const Walk = () => {
                 }
             );
 
-            return () => navigator.geolocation.clearWatch(watchId); // 추적 중지 시 watchPosition 해제
+            // 일정 간격으로 Polyline 및 거리 업데이트
+            distanceUpdateRef.current = setInterval(() => {
+                if (previousPosition.current) {
+                    // 현재 위치를 기준으로 Polyline 업데이트
+                    const currentPolylinePath = polylinePath;
+                    if (currentPolylinePath.length > 1) {
+                        const polyline = new kakao.maps.Polyline({
+                            path: currentPolylinePath,
+                        });
+                        setDistance(polyline.getLength() / 1000); // Polyline 경로의 총 길이를 계산하여 km 단위로 설정
+                    }
+                }
+            }, updateInterval);
+
+            // 추적 중지 시 watchPosition 및 간격 업데이트 해제
+            return () => {
+                navigator.geolocation.clearWatch(watchId);
+                clearInterval(distanceUpdateRef.current);
+            };
         } else {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
         }
@@ -131,7 +151,7 @@ const Walk = () => {
 
     const handleEndConfirmation = () => {
         setShowEndScreen(false);
-        setShowSaveScreen(true);
+        setShowSaveScreen(true); // 저장 화면으로 전환
     };
 
     const handleSave = () => {
@@ -143,12 +163,14 @@ const Walk = () => {
         window.location.href = "/record";
     };
 
+    // 시각적 시간 포맷팅
     const formatTime = () => {
         const minutes = Math.floor(time / 60);
         const seconds = time % 60;
         return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
 
+    // 평균 페이스 계산
     const formatPace = () => {
         if (distance === 0) return "N/A"; // 거리 0일 때는 계산하지 않음
         const paceInSeconds = time / distance; // 초/km 계산
@@ -157,6 +179,7 @@ const Walk = () => {
         return `${paceMinutes}' ${String(paceSeconds).padStart(2, '0')}''`; 
     };
 
+    // 속도 계산
     const calculateSpeed = () => {
         if (time === 0 || distance === 0) return "N/A"; // 시간 또는 거리 0일 때는 계산하지 않음
         const speed = (distance / (time / 3600)).toFixed(2); // 시속(km/h) 계산
