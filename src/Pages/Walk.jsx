@@ -140,6 +140,8 @@ const Walk = () => {
 
     // 경로를 캔버스에 그려주는 함수
     const drawPath = (path) => {
+        if (path.length === 0) return null;
+
         let [minLat, maxLat, minLng, maxLng] = [Infinity, -Infinity, Infinity, -Infinity];
 
         for (const p of path) {
@@ -159,59 +161,45 @@ const Walk = () => {
         const pathCanvas = canvas.getContext("2d");
 
         if (pathCanvas) {
-            pathCanvas.fillStyle = "#e0e0e0"; // 배경색
+            pathCanvas.fillStyle = "white"; // 배경색
             pathCanvas.fillRect(0, 0, canvas.width, canvas.height);
 
-            pathCanvas.strokeStyle = "#00a878"; // 경로 색상
+            pathCanvas.strokeStyle = "#00a878";
             pathCanvas.lineJoin = "round";
             pathCanvas.lineCap = "round";
             pathCanvas.lineWidth = 7;
-            pathCanvas.font = "16px Arial";
 
             pathCanvas.beginPath();
-
             for (let i = 0; i < path.length; i++) {
-                let x, y;
+                const x = CANVAS_OFFSET + (path[i].lng - minLng) * scaleX;
+                const y = canvas.height - CANVAS_OFFSET - (path[i].lat - minLat) * scaleY;
 
-                // 좌표 스케일링
-                if (path.length === 1) {
-                    x = canvas.width / 2;
-                    y = canvas.height / 2;
-                } else {
-                    x = CANVAS_OFFSET + (path[i].lng - minLng) * scaleX;
-                    y = canvas.height - CANVAS_OFFSET - (path[i].lat - minLat) * scaleY;
-                }
-
-                // 경로 그리기
                 if (i === 0) {
                     pathCanvas.moveTo(x, y);
                 } else {
                     pathCanvas.lineTo(x, y);
                 }
             }
-
             pathCanvas.stroke();
 
-            // 시작과 끝 지점에 아이콘 표시
-            const [startX, startY] = [
-                CANVAS_OFFSET + (path[0].lng - minLng) * scaleX,
-                canvas.height - CANVAS_OFFSET - (path[0].lat - minLat) * scaleY,
-            ];
-
-            const [endX, endY] = [
-                CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
-                canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
-            ];
+            // 시작/끝 지점 표시
+            const start = {
+                x: CANVAS_OFFSET + (path[0].lng - minLng) * scaleX,
+                y: canvas.height - CANVAS_OFFSET - (path[0].lat - minLat) * scaleY,
+            };
+            const end = {
+                x: CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
+                y: canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
+            };
 
             pathCanvas.beginPath();
-            pathCanvas.arc(startX, startY, 6, 0, Math.PI * 2, false);
-            pathCanvas.arc(endX, endY, 6, 0, Math.PI * 2, false);
-
-            pathCanvas.fillStyle = "#00a878"; // 시작/끝점 색상
+            pathCanvas.arc(start.x, start.y, 6, 0, Math.PI * 2, false);
+            pathCanvas.arc(end.x, end.y, 6, 0, Math.PI * 2, false);
+            pathCanvas.fillStyle = "#00a878";
             pathCanvas.fill();
 
-            pathCanvas.fillText("👟", startX, startY);
-            pathCanvas.fillText("⛳️", endX, endY);
+            pathCanvas.fillText("👟", start.x, start.y);
+            pathCanvas.fillText("⛳️", end.x, end.y);
         }
 
         return canvas.toDataURL("image/png");
@@ -219,9 +207,26 @@ const Walk = () => {
 
     // 산책 종료
     const stopTracking = () => {
+        console.log("Tracking stopped.");
         setIsTracking(false);
         setShowEndScreen(true);
-        const pathDataUrl = drawPath(polylinePath);
+        
+        // 위치 추적 중지
+        if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+            console.log("watchPosition stopped.");
+        }
+        if (distanceUpdateRef.current) {
+            clearInterval(distanceUpdateRef.current);
+            distanceUpdateRef.current = null;
+            console.log("Interval cleared.");
+        }
+        
+        const pathDataUrl = drawPath(polylinePath.map(p => ({
+            lat: p.Ma,
+            lng: p.La,
+        })));
         setMapImage(pathDataUrl); // 경로 이미지 설정
     };
 
