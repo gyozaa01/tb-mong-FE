@@ -21,8 +21,9 @@ const Home = () => {
 
     const fetchCharacter = async () => {
         try {
-            const response = await api.get('/api/home/repre-character');
-            setCharacterImage(response.data.characterImage);
+            const response = await api.get('/api/home/repre-character', { responseType: 'blob' });
+            const imageUrl = URL.createObjectURL(response.data);
+            setCharacterImage(imageUrl);
         } catch (error) {
             console.error('대표 캐릭터를 가져오는 중 오류 발생:', error);
         }
