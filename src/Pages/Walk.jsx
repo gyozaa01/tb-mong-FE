@@ -192,14 +192,19 @@ const Walk = () => {
                 y: canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
             };
 
-            pathCanvas.beginPath();
-            pathCanvas.arc(start.x, start.y, 6, 0, Math.PI * 2, false);
-            pathCanvas.arc(end.x, end.y, 6, 0, Math.PI * 2, false);
-            pathCanvas.fillStyle = "#00a878";
-            pathCanvas.fill();
+            // 시작 지점에 logo.png 표시
+            const startImage = new Image();
+            startImage.src = "/logo.png";
+            startImage.onload = () => {
+                pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
+            };
 
-            pathCanvas.fillText("👟", start.x, start.y);
-            pathCanvas.fillText("⛳️", end.x, end.y);
+            // 끝 지점에 flag.png 표시
+            const endImage = new Image();
+            endImage.src = "/flag.png";
+            endImage.onload = () => {
+                pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
+            };
         }
 
         return canvas.toDataURL("image/png");
