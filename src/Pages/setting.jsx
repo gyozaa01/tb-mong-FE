@@ -98,20 +98,21 @@ const Setting = () => {
 
     const handleLogout = () => {
         if (isLoggedIn) {
+            // 세션 및 JWT 토큰 제거
+            sessionStorage.removeItem('jwt_token'); // JWT 토큰 제거
+            sessionStorage.removeItem('kakao_access_token'); // Kakao 토큰 제거
+            
+            // Kakao 서버와의 연결 해제 및 클라이언트 로그아웃
             window.Kakao.Auth.logout(() => {
                 console.log('카카오 로그아웃 완료');
-                sessionStorage.removeItem('jwt_token'); // 로그아웃 시 jwt 토큰 제거
-                window.Kakao.Auth.setAccessToken(null); // Kakao SDK의 토큰 완전히 제거
-    
-                // SDK를 완전히 초기화 (특히 로그아웃 이후 재로그인을 위해)
-                window.Kakao.cleanup(); // Kakao SDK의 상태를 초기화
-    
-                navigate('/');
+                
+                // Kakao API를 통한 서버 로그아웃을 위해 Logout Redirect URI로 이동
+                window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${process.env.REACT_APP_KAKAO_JS_KEY}&logout_redirect_uri=https://tb-mong-fe.vercel.app/logout`;
             });
         } else {
             console.log('로그인된 사용자가 없습니다.');
         }
-    };    
+    };       
 
     return (
         <Container>
