@@ -107,7 +107,7 @@ const Setting = () => {
                 console.log('카카오 로그아웃 완료');
                 
                 // Kakao API를 통한 서버 로그아웃을 위해 Logout Redirect URI로 이동
-                window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${process.env.REACT_APP_KAKAO_JS_KEY}&logout_redirect_uri=https://tb-mong-fe.vercel.app/logout`;
+                window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${process.env.REACT_APP_KAKAO_JS_KEY}&logout_redirect_uri=https://tb-mong-fe.vercel.app/`;
             });
         } else {
             console.log('로그인된 사용자가 없습니다.');
