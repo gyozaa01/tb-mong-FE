@@ -101,6 +101,11 @@ const Setting = () => {
             window.Kakao.Auth.logout(() => {
                 console.log('카카오 로그아웃 완료');
                 sessionStorage.removeItem('jwt_token'); // 로그아웃 시 jwt 토큰 제거
+                window.Kakao.Auth.setAccessToken(null); // Kakao SDK의 토큰 완전히 제거
+    
+                // SDK를 완전히 초기화 (특히 로그아웃 이후 재로그인을 위해)
+                window.Kakao.cleanup(); // Kakao SDK의 상태를 초기화
+    
                 navigate('/');
             });
         } else {
