@@ -12,7 +12,7 @@ const DongneSetting = () => {
   const [locationCode, setLocationCode] = useState(''); // 법정동 코드
   const navigate = useNavigate(); // 페이지 이동을 위한 훅
   const location = useLocation();
-  const kakaoAccessToken = location.state?.token; // Auth 페이지에서 전달된 kakaoAccessToken
+  const kakaoAccessToken = location.state?.kakaoAccessToken; // Auth 페이지에서 전달된 kakaoAccessToken
 
   // 마커를 생성하는 함수
   const createMarker = useCallback((mapInstance) => {
@@ -106,13 +106,12 @@ const DongneSetting = () => {
 
     // API 호출을 통해 회원가입
     api.post('/api/auth/signup', {
-      kakaoAccessToken: kakaoAccessToken,
-      locationCode: locationCode, // 법정동 코드 사용
+      kakaoAccessToken,
+      locationCode,
     })
     .then(response => {
       if (response.data.jwtToken) {
         sessionStorage.setItem('jwt_token', response.data.jwtToken);
-        sessionStorage.setItem('userId', response.data.userId);
         navigate('/home');
       } else {
         console.error('회원가입 응답 오류:', response.data);
