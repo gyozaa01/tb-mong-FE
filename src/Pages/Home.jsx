@@ -9,7 +9,7 @@ const WRAPPER_WIDTH = '375px';
 const Home = () => {
     const [level, setLevel] = useState(1);
     const [experience, setExperience] = useState(0);
-    const [characterImage, setCharacterImage] = useState('/mong1.png'); // 기본 이미지
+    const [characterImage, setCharacterImage] = useState(''); // 기본 이미지
     const [stats, setStats] = useState({ today_cnt: 0, today_km: 0, total_cnt: 0, total_km: 0 });
     const [showModal, setShowModal] = useState(false);
 
