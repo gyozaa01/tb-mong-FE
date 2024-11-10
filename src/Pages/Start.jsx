@@ -74,11 +74,17 @@ const GreenBox = styled.div`
 const Start = () => {
     useEffect(() => {
         const kakaoKey = process.env.REACT_APP_KAKAO_JS_KEY;
+        
+        // SDK가 존재하면 완전히 초기화한 후 재초기화
+        if (window.Kakao) {
+            window.Kakao.cleanup();
+        }
+    
         if (window.Kakao && !window.Kakao.isInitialized()) {
             window.Kakao.init(kakaoKey);
             console.log('카카오 SDK 초기화 완료');
         }
-    }, []);
+    }, []);    
 
     const handleKakaoLogin = () => {
         const redirect_uri = 'https://tb-mong-fe.vercel.app/auth'; // 인증 후 리디렉트될 URI
