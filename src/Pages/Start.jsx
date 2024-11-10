@@ -88,15 +88,15 @@ const Start = () => {
 
     const handleKakaoLogin = () => {
         const redirect_uri = 'https://tb-mong-fe.vercel.app/auth'; // 인증 후 리디렉트될 URI
-
-        if (window.Kakao && window.Kakao.Auth) {
+    
+        if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Auth) {
             window.Kakao.Auth.authorize({
                 redirectUri: redirect_uri, // 카카오 로그인 성공 후 리디렉트 URI
             });
         } else {
-            console.log('Kakao Auth 객체를 사용할 수 없습니다.');
+            console.error('Kakao SDK가 초기화되지 않았거나 Auth 객체를 사용할 수 없습니다.');
         }
-    };
+    };    
 
     return (
         <Container>
