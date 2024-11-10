@@ -197,6 +197,7 @@ const CharacterContainer = styled.div`
         width: 150px;
         height: auto;
         z-index: 2;
+        background: transparent;
     }
 
     .carpet {
