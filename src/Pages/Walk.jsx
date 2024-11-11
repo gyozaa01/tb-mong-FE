@@ -228,10 +228,14 @@ const Walk = () => {
             console.log("Interval cleared.");
         }
         
-        const pathDataUrl = drawPath(polylinePath.map(p => ({
+        // Polyline 경로를 저장 후 콘솔에 출력
+        const pathData = polylinePath.map(p => ({
             lat: p.Ma,
             lng: p.La,
-        })));
+        }));
+        console.log("총 산책 경로:", pathData); // Polyline 점들의 리스트 출력
+
+        const pathDataUrl = drawPath(pathData);
         setMapImage(pathDataUrl); // 경로 이미지 설정
     };
 
