@@ -194,7 +194,7 @@ const Walk = () => {
 
             // 시작 지점에 logo.png 표시
             const startImage = new Image();
-            startImage.src = `${process.env.PUBLIC_URL}/logo.png`;
+            startImage.src = "/logo.png"; // 상대 경로 사용
             startImage.onload = () => {
                 console.log("Start image loaded");
                 pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
@@ -205,7 +205,7 @@ const Walk = () => {
 
             // 끝 지점에 flag.png 표시
             const endImage = new Image();
-            endImage.src = `${process.env.PUBLIC_URL}/flag.png`;
+            endImage.src = "/flag.png"; // 상대 경로 사용
             endImage.onload = () => {
                 console.log("End image loaded");
                 pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
