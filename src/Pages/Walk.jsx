@@ -182,32 +182,33 @@ const Walk = () => {
             }
             pathCanvas.stroke();
 
-            // 시작 지점
+            // 시작/끝 지점 좌표 설정
+            const start = {
+                x: CANVAS_OFFSET + (path[0].lng - minLng) * scaleX,
+                y: canvas.height - CANVAS_OFFSET - (path[0].lat - minLat) * scaleY,
+            };
+            const end = {
+                x: CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
+                y: canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
+            };
+    
+            // 시작 지점에 logo.png 표시
             const startImage = new Image();
             startImage.src = "/logo.png";
             startImage.onload = () => {
-                const start = {
-                    x: CANVAS_OFFSET + (path[0].lng - minLng) * scaleX,
-                    y: canvas.height - CANVAS_OFFSET - (path[0].lat - minLat) * scaleY,
-                };
-                pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24);
+                pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
             };
-
-            // 끝 지점
+    
+            // 끝 지점에 flag.png 표시
             const endImage = new Image();
             endImage.src = "/flag.png";
             endImage.onload = () => {
-                const end = {
-                    x: CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
-                    y: canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
-                };
-                pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24);
+                pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
             };
         }
 
         return canvas.toDataURL("image/png");
     };
-
 
     // 산책 종료
     const stopTracking = () => {
