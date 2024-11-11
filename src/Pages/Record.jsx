@@ -2,50 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import Header from '../Components/Header';
 import BottomNav from '../Components/BottomNav';
-
-// 더미 데이터
-const walkRecords = [
-  {
-    date: '2024-09-04',
-    title: '좋아요런',
-    location: '우산동',
-    distance: 4.0,
-    likes: 17,
-    mapImage: '/good_run.png',
-  },
-  {
-    date: '2024-09-04',
-    title: '좋아요런',
-    location: '우산동',
-    distance: 4.0,
-    likes: 17,
-    mapImage: '/good_run.png',
-  },
-  {
-    date: '2024-09-04',
-    title: '좋아요런',
-    location: '우산동',
-    distance: 4.0,
-    likes: 17,
-    mapImage: '/good_run.png',
-  },
-  {
-    date: '2024-09-04',
-    title: '좋아요런',
-    location: '우산동',
-    distance: 4.0,
-    likes: 17,
-    mapImage: '/good_run.png',
-  },
-  {
-    date: '2024-09-05',
-    title: '댕댕이런',
-    location: '풍남동',
-    distance: 3.2,
-    likes: 23,
-    mapImage: '/dog_run.png',
-  },
-];
+import api from './Api';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -58,6 +15,7 @@ const WRAPPER_WIDTH = '375px';
 const Record = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [filteredRecords, setFilteredRecords] = useState([]);
+  const [monthRecords, setMonthRecords] = useState([]);
   const [flippedDays, setFlippedDays] = useState({});
 
   // 날짜를 UTC 기준으로 처리하는 함수
@@ -67,10 +25,39 @@ const Record = () => {
       .split('T')[0];
   };
 
+  // 월별 기록 상태 조회
   useEffect(() => {
-    const formattedDate = getFormattedDate(selectedDate);
-    const filtered = walkRecords.filter(record => record.date === formattedDate);
-    setFilteredRecords(filtered);
+    const fetchMonthRecords = async () => {
+      try {
+        const year = selectedDate.getFullYear();
+        const month = selectedDate.getMonth() + 1; // 0부터 시작하므로 +1 필요
+        const response = await api.get(`/api/record/month`, {
+          params: { year, month },
+        });
+        setMonthRecords(response.data);
+      } catch (error) {
+        console.error('월별 기록을 가져오는 중 오류 발생:', error);
+      }
+    };
+
+    fetchMonthRecords();
+  }, [selectedDate]);
+
+  // 날짜별 기록 조회
+  useEffect(() => {
+    const fetchDateRecords = async () => {
+      try {
+        const formattedDate = getFormattedDate(selectedDate);
+        const response = await api.get(`/api/record/date`, {
+          params: { date: formattedDate },
+        });
+        setFilteredRecords(response.data);
+      } catch (error) {
+        console.error('날짜별 기록을 가져오는 중 오류 발생:', error);
+      }
+    };
+
+    fetchDateRecords();
   }, [selectedDate]);
 
   const handleDateClick = (date) => {
@@ -108,7 +95,7 @@ const Record = () => {
     for (let day = 1; day <= daysInMonth; day++) {
       const currentDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), day);
       const formattedDate = getFormattedDate(currentDate);
-      const isRecorded = walkRecords.some(record => record.date === formattedDate);
+      const isRecorded = monthRecords.some(record => record.date === formattedDate && record.yn);
       const isFlipped = flippedDays[day]; // flip 상태 확인
 
       calendarDays.push(
@@ -141,20 +128,20 @@ const Record = () => {
     if (filteredRecords.length > 0) {
       return filteredRecords.map((record, index) => (
         <RecordItem key={index}>
-          <MapImage src={record.mapImage} alt={record.title} />
+          <MapImage src={record.image || '/placeholder.png'} alt={record.name} />
           <RecordDetails>
-            <Title>{record.title}</Title>
+            <Title>{record.name}</Title>
             <Detail>
               <img src="/location.png" alt="Location Icon" />
-              <Location>{record.location}</Location>
+              <Location>{record.location_name}</Location>
             </Detail>
             <Detail>
               <img src="/logo.png" alt="Distance Icon" />
-              <Distance>{record.distance} km</Distance>
+              <Distance>{record.km} km</Distance>
             </Detail>
           </RecordDetails>
           <Likes>
-            <img src="/heart.png" alt="Likes" /> {record.likes}
+            <img src="/heart.png" alt="Likes" /> {record.like_count}
           </Likes>
         </RecordItem>
       ));
@@ -194,7 +181,6 @@ const Record = () => {
   );
 };
 
-// Styled Components
 const Container = styled.div`
   display: flex;
   justify-content: center;
