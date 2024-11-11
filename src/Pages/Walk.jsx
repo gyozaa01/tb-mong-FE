@@ -194,14 +194,14 @@ const Walk = () => {
 
             // 시작 지점에 logo.png 표시
             const startImage = new Image();
-            startImage.src = "/logo.png";
+            startImage.src = `${process.env.PUBLIC_URL}/logo.png`;
             startImage.onload = () => {
                 pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
             };
 
             // 끝 지점에 flag.png 표시
             const endImage = new Image();
-            endImage.src = "/flag.png";
+            endImage.src = `${process.env.PUBLIC_URL}/flag.png`;
             endImage.onload = () => {
                 pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
             };

@@ -94,6 +94,7 @@ const Start = () => {
                 redirectUri: redirect_uri, // 카카오 로그인 성공 후 리디렉트 URI
             });
         } else {
+            // 재로그인 여기가 문제같음..
             console.error('Kakao SDK가 초기화되지 않았거나 Auth 객체를 사용할 수 없습니다.');
         }
     };    
