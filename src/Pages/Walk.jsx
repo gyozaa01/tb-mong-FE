@@ -196,14 +196,22 @@ const Walk = () => {
             const startImage = new Image();
             startImage.src = `${process.env.PUBLIC_URL}/logo.png`;
             startImage.onload = () => {
+                console.log("Start image loaded");
                 pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
+            };
+            startImage.onerror = () => {
+                console.error("Failed to load start image");
             };
 
             // 끝 지점에 flag.png 표시
             const endImage = new Image();
             endImage.src = `${process.env.PUBLIC_URL}/flag.png`;
             endImage.onload = () => {
+                console.log("End image loaded");
                 pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
+            };
+            endImage.onerror = () => {
+                console.error("Failed to load end image");
             };
         }
 
