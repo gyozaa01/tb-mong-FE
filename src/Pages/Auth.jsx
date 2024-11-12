@@ -27,7 +27,7 @@ const Auth = () => {
         }
       } catch (err) {
         console.error('사용자 정보 확인 중 오류 발생:', err);
-        if (err.response && err.response.status === 401) {
+        if (err.response && err.response.status === 400) {
           navigate('/dongne-setting', { state: { kakaoAccessToken } });
         }
       } finally {
