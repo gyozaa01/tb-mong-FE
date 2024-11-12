@@ -121,9 +121,11 @@ const DongneSetting = () => {
     }
 
     // API 호출을 통해 회원가입
-    api.post('/api/auth/signup', {
-      kakaoAccessToken,
-      locationCode,
+    api.post('/api/auth/signup', null, {
+      params: {
+        kakaoAccessToken: kakaoAccessToken,
+        locationCode: locationCode,
+      }
     })
     .then(response => {
       if (response.data.jwtToken) {
@@ -140,27 +142,27 @@ const DongneSetting = () => {
 
   return (
     <Container>
-        <AppWrapper>
-            <Header>
-              <BackButton onClick={() => navigate(-1)}>&lt;</BackButton>
-              <Title>내 동네 설정</Title>
-            </Header>
+      <AppWrapper>
+        <Header>
+          <BackButton onClick={() => navigate(-1)}>&lt;</BackButton>
+          <Title>내 동네 설정</Title>
+        </Header>
 
-            <MapContainer id="map" />
+        <MapContainer id="map" />
 
-            <DongneBox>
-                <ResetButton onClick={handleReset}>
-                    <img src="/reset.png" alt="새로고침" />
-                </ResetButton>
-                <DongneLabel>내 동네</DongneLabel>
-                <DongneName>
-                    {dongName ? dongName : "동네를 찾는 중..."}
-                </DongneName>
-                <SaveButton onClick={handleSave}>
-                    <img src="/save.png" alt="저장" />
-                </SaveButton>
-            </DongneBox>
-        </AppWrapper>
+        <DongneBox>
+          <ResetButton onClick={handleReset}>
+            <img src="/reset.png" alt="새로고침" />
+          </ResetButton>
+          <DongneLabel>내 동네</DongneLabel>
+          <DongneName>
+            {dongName ? dongName : "동네를 찾는 중..."}
+          </DongneName>
+          <SaveButton onClick={handleSave}>
+            <img src="/save.png" alt="저장" />
+          </SaveButton>
+        </DongneBox>
+      </AppWrapper>
     </Container>
   );
 };
