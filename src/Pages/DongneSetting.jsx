@@ -114,30 +114,29 @@ const DongneSetting = () => {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!kakaoAccessToken || !locationCode) {
       console.error("카카오 토큰이나 법정동 코드가 없습니다.");
       return;
     }
 
-    // API 호출을 통해 회원가입
-    api.post('/api/auth/signup', null, {
-      params: {
-        kakaoAccessToken: kakaoAccessToken,
-        locationCode: locationCode,
-      }
-    })
-    .then(response => {
-      if (response.data.jwtToken) {
-        sessionStorage.setItem('jwt_token', response.data.jwtToken);
-        navigate('/home');
+    try {
+      const response = await api.post('/api/auth/signup', null, {
+        params: {
+          kakaoAccessToken: kakaoAccessToken,
+          locationCode: locationCode,
+        }
+      });
+
+      if (response.data) {
+        sessionStorage.setItem('jwt_token', response.data); // JWT 토큰을 sessionStorage에 저장
+        navigate('/home'); // 홈 화면으로 이동
       } else {
-        console.error('회원가입 응답 오류:', response.data);
+        console.error('JWT 토큰이 응답에 포함되지 않았습니다:', response.data);
       }
-    })
-    .catch(err => {
+    } catch (err) {
       console.error('회원가입 중 오류 발생:', err);
-    });
+    }
   };
 
   return (
