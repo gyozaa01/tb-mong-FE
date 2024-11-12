@@ -145,7 +145,7 @@ const DongneSetting = () => {
         });
 
         if (response.status === 200) {
-          console.log('동네가 성공적으로 업데이트되었습니다.');
+          alert('동네가 성공적으로 업데이트되었습니다.');
           navigate('/home');
         } else {
           console.error('동네 업데이트 응답 오류:', response.data);
