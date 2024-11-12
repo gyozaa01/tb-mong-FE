@@ -139,7 +139,7 @@ const Walk = () => {
     };
 
     // 경로를 캔버스에 그려주는 함수
-    const drawPath = async (path) => {
+    const drawPath = (path) => {
         if (path.length === 0) return null;
 
         let [minLat, maxLat, minLng, maxLng] = [Infinity, -Infinity, Infinity, -Infinity];
@@ -191,34 +191,38 @@ const Walk = () => {
                 x: CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
                 y: canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
             };
-
-            // 이미지 로드 함수
-            const loadImage = (src) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = src;
-                    img.onload = () => resolve(img);
-                });
-            };
-
-            // logo.png와 flag.png 로드 및 시작점/끝점에 그리기
-            const startImage = await loadImage("/logo.png");
-            const endImage = await loadImage("/flag.png");
-            
-            pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 시작 지점에 logo.png 표시
-            pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 끝 지점에 flag.png 표시
+    
+            // 시작과 끝 지점에 이미지를 그리기 위한 Promise 생성
+            return new Promise((resolve) => {
+                const startImage = new Image();
+                const endImage = new Image();
+    
+                startImage.src = `${process.env.PUBLIC_URL}/logo.png`; // 시작 지점 이미지 경로
+                endImage.src = `${process.env.PUBLIC_URL}/flag.png`; // 끝 지점 이미지 경로
+    
+                // 모든 이미지가 로드된 후 canvas를 반환하는 함수
+                const checkIfAllImagesLoaded = () => {
+                    if (startImage.complete && endImage.complete) {
+                        pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24);
+                        pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24);
+                        resolve(canvas.toDataURL("image/png"));
+                    }
+                };
+    
+                startImage.onload = checkIfAllImagesLoaded;
+                endImage.onload = checkIfAllImagesLoaded;
+            });
         }
-
-        return canvas.toDataURL("image/png");
+    
+        return null;
     };
-
+    
 
     // 산책 종료
-    const stopTracking = () => {
+    const stopTracking = async () => {
         console.log("Tracking stopped.");
         setIsTracking(false);
         setShowEndScreen(true);
-        
         // 위치 추적 중지
         if (watchIdRef.current !== null) {
             navigator.geolocation.clearWatch(watchIdRef.current);
@@ -230,7 +234,6 @@ const Walk = () => {
             distanceUpdateRef.current = null;
             console.log("Interval cleared.");
         }
-        
         // Polyline 경로를 저장 후 콘솔에 출력
         const pathData = polylinePath.map(p => ({
             lat: p.Ma,
@@ -238,8 +241,9 @@ const Walk = () => {
         }));
         console.log("총 산책 경로:", pathData); // Polyline 점들의 리스트 출력
 
-        const pathDataUrl = drawPath(pathData);
-        setMapImage(pathDataUrl); // 경로 이미지 설정
+        // drawPath 호출 시 await 사용
+        const pathDataUrl = await drawPath(pathData);
+        setMapImage(pathDataUrl);
     };
 
     const handleStartClick = () => {
