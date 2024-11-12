@@ -115,27 +115,44 @@ const DongneSetting = () => {
   };
 
   const handleSave = async () => {
-    if (!kakaoAccessToken || !locationCode) {
-      console.error("카카오 토큰이나 법정동 코드가 없습니다.");
+    if (!locationCode) {
+      console.error("법정동 코드가 없습니다.");
       return;
     }
 
     try {
-      const response = await api.post('/api/auth/signup', null, {
-        params: {
-          kakaoAccessToken: kakaoAccessToken,
-          locationCode: locationCode,
-        }
-      });
+      if (kakaoAccessToken) {
+        // 회원가입 요청
+        const response = await api.post('/api/auth/signup', null, {
+          params: {
+            kakaoAccessToken: kakaoAccessToken,
+            locationCode: locationCode,
+          }
+        });
 
-      if (response.data) {
-        sessionStorage.setItem('jwt_token', response.data); // JWT 토큰을 sessionStorage에 저장.
-        navigate('/home'); // 홈 화면으로 이동
+        if (response.data) {
+          sessionStorage.setItem('jwt_token', response.data); // JWT 토큰을 sessionStorage에 저장.
+          navigate('/home'); // 홈 화면으로 이동
+        } else {
+          console.error('JWT 토큰이 응답에 포함되지 않았습니다:', response.data);
+        }
       } else {
-        console.error('JWT 토큰이 응답에 포함되지 않았습니다:', response.data);
+        // 동네 재설정 요청
+        const response = await api.post('/api/settings/set-location', null, {
+          params: {
+            locationCode: locationCode,
+          }
+        });
+
+        if (response.status === 200) {
+          console.log('동네가 성공적으로 업데이트되었습니다.');
+          navigate('/home');
+        } else {
+          console.error('동네 업데이트 응답 오류:', response.data);
+        }
       }
     } catch (err) {
-      console.error('회원가입 중 오류 발생:', err);
+      console.error('동네 설정 중 오류 발생:', err);
     }
   };
 
