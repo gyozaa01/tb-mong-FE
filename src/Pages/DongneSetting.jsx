@@ -24,17 +24,33 @@ const DongneSetting = () => {
     mapInstance.setCenter(markerPosition); // 지도 중심을 마커 위치로 설정
   }, [currentLocation]);
 
-  // 주소 및 법정동 코드 가져오기 함수
-  const fetchAddress = useCallback((mapInstance) => {
-    const geocoder = new kakao.maps.services.Geocoder();
-    geocoder.coord2Address(currentLocation.lng, currentLocation.lat, (result, status) => {
-      if (status === kakao.maps.services.Status.OK) {
-        setDongName(result[0].address.region_3depth_name);
-        setLocationCode(result[0].address.b_code); // 법정동 코드 저장
+  // 주소 및 법정동 코드 가져오기 함수 (Kakao REST API 사용)
+  const fetchAddress = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${currentLocation.lng}&y=${currentLocation.lat}`,
+        {
+          headers: {
+            Authorization: `KakaoAK ${process.env.REACT_APP_KAKAO_REST_API_KEY}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+      if (data && data.documents && data.documents.length > 0) {
+        const regionInfo = data.documents.find((doc) => doc.region_type === "B");
+        if (regionInfo) {
+          setDongName(regionInfo.region_3depth_name);
+          setLocationCode(regionInfo.code);
+        } else {
+          console.warn("법정동 정보가 없습니다.");
+        }
       } else {
-        setDongName("동네를 찾을 수 없습니다.");
+        console.warn("행정구역 정보를 불러올 수 없습니다.");
       }
-    });
+    } catch (error) {
+      console.error("주소 정보를 불러오는 중 오류 발생:", error);
+    }
   }, [currentLocation]);
 
   // 지도 및 마커 생성
@@ -54,7 +70,7 @@ const DongneSetting = () => {
         const newMap = new kakao.maps.Map(container, options);
 
         createMarker(newMap);  // 마커를 생성하는 함수 호출
-        fetchAddress(newMap);  // 주소 가져오기
+        fetchAddress(); // 주소 가져오기
       });
     };
 
@@ -99,8 +115,8 @@ const DongneSetting = () => {
   };
 
   const handleSave = () => {
-    if (!kakaoAccessToken) {
-      console.error("카카오 토큰이 없습니다.");
+    if (!kakaoAccessToken || !locationCode) {
+      console.error("카카오 토큰이나 법정동 코드가 없습니다.");
       return;
     }
 
