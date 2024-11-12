@@ -129,7 +129,7 @@ const DongneSetting = () => {
       });
 
       if (response.data) {
-        sessionStorage.setItem('jwt_token', response.data); // JWT 토큰을 sessionStorage에 저장
+        sessionStorage.setItem('jwt_token', response.data); // JWT 토큰을 sessionStorage에 저장.
         navigate('/home'); // 홈 화면으로 이동
       } else {
         console.error('JWT 토큰이 응답에 포함되지 않았습니다:', response.data);
