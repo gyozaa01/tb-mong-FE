@@ -139,7 +139,7 @@ const Walk = () => {
     };
 
     // 경로를 캔버스에 그려주는 함수
-    const drawPath = (path) => {
+    const drawPath = async (path) => {
         if (path.length === 0) return null;
 
         let [minLat, maxLat, minLng, maxLng] = [Infinity, -Infinity, Infinity, -Infinity];
@@ -191,24 +191,27 @@ const Walk = () => {
                 x: CANVAS_OFFSET + (path[path.length - 1].lng - minLng) * scaleX,
                 y: canvas.height - CANVAS_OFFSET - (path[path.length - 1].lat - minLat) * scaleY,
             };
-    
-            // 시작 지점에 logo.png 표시
-            const startImage = new Image();
-            startImage.src = "/logo.png";
-            startImage.onload = () => {
-                pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
+
+            // 이미지 로드 함수
+            const loadImage = (src) => {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.onload = () => resolve(img);
+                });
             };
-    
-            // 끝 지점에 flag.png 표시
-            const endImage = new Image();
-            endImage.src = "/flag.png";
-            endImage.onload = () => {
-                pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 이미지 크기를 조절하여 표시
-            };
+
+            // logo.png와 flag.png 로드 및 시작점/끝점에 그리기
+            const startImage = await loadImage("/logo.png");
+            const endImage = await loadImage("/flag.png");
+            
+            pathCanvas.drawImage(startImage, start.x - 12, start.y - 12, 24, 24); // 시작 지점에 logo.png 표시
+            pathCanvas.drawImage(endImage, end.x - 12, end.y - 12, 24, 24); // 끝 지점에 flag.png 표시
         }
 
         return canvas.toDataURL("image/png");
     };
+
 
     // 산책 종료
     const stopTracking = () => {
