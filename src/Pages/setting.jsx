@@ -83,7 +83,6 @@ const Setting = () => {
     
         const kakaoKey = process.env.REACT_APP_KAKAO_JS_KEY;
     
-        // Kakao SDK 초기화 확인 로그 추가
         if (window.Kakao) {
             if (!window.Kakao.isInitialized()) {
                 window.Kakao.init(kakaoKey);
@@ -103,12 +102,15 @@ const Setting = () => {
             sessionStorage.removeItem('kakao_access_token'); // Kakao 토큰 제거
             
             // Kakao 서버와의 연결 해제 및 클라이언트 로그아웃
-            window.Kakao.Auth.logout(() => {
-                console.log('카카오 로그아웃 완료');
-                
+            if (window.Kakao.Auth) {
+                window.Kakao.Auth.logout(() => {
+                    console.log('카카오 로그아웃 완료');
+                    window.Kakao.cleanup(); // SDK 완전 초기화
+                    
                 // Kakao API를 통한 서버 로그아웃을 위해 Logout Redirect URI로 이동
                 window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${process.env.REACT_APP_KAKAO_JS_KEY}&logout_redirect_uri=https://tb-mong-fe.vercel.app/`;
-            });
+                });
+            }
         } else {
             console.log('로그인된 사용자가 없습니다.');
         }

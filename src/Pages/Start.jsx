@@ -75,12 +75,11 @@ const Start = () => {
     useEffect(() => {
         const kakaoKey = process.env.REACT_APP_KAKAO_JS_KEY;
         
-        // SDK가 존재하면 완전히 초기화한 후 재초기화
         if (window.Kakao) {
-            window.Kakao.cleanup();
+            window.Kakao.cleanup(); // 기존 Kakao 인스턴스 완전히 제거
         }
-    
-        if (window.Kakao && !window.Kakao.isInitialized()) {
+
+        if (!window.Kakao.isInitialized()) {
             window.Kakao.init(kakaoKey);
             console.log('카카오 SDK 초기화 완료');
         }
@@ -89,12 +88,15 @@ const Start = () => {
     const handleKakaoLogin = () => {
         const redirect_uri = 'https://tb-mong-fe.vercel.app/auth'; // 인증 후 리디렉트될 URI
     
-        if (window.Kakao && window.Kakao.isInitialized() && window.Kakao.Auth) {
+        if (!window.Kakao.isInitialized()) {
+            window.Kakao.init(process.env.REACT_APP_KAKAO_JS_KEY);
+        }
+
+        if (window.Kakao.Auth) {
             window.Kakao.Auth.authorize({
                 redirectUri: redirect_uri, // 카카오 로그인 성공 후 리디렉트 URI
             });
         } else {
-            // 재로그인 여기가 문제같음..
             console.error('Kakao SDK가 초기화되지 않았거나 Auth 객체를 사용할 수 없습니다.');
         }
     };    
