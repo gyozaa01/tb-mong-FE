@@ -18,6 +18,8 @@ const Walk = () => {
     const [time, setTime] = useState(0); // 시간 (초 단위)
     const [polylinePath, setPolylinePath] = useState([]); // Polyline 경로를 저장하는 배열
     const [location, setLocation] = useState(localStorage.getItem("startLocation") || ''); // 초기 위치 설정
+    const [locationCode, setLocationCode] = useState(localStorage.getItem("locationCode") || '');
+    const [name, setName] = useState(''); // 산책로명을 저장하는 상태
     const previousPosition = useRef(null); // 이전 위치 저장용 ref
     const visualTimeRef = useRef(null); // 시각적으로 1초마다 시간 증가용
     const updateInterval = 2000; // 거리 및 위치 업데이트 간격 (2초)
@@ -96,8 +98,11 @@ const Walk = () => {
                         geocoder.coord2RegionCode(longitude, latitude, (result, status) => {
                             if (status === kakao.maps.services.Status.OK) {
                                 const dongName = `${result[0].region_3depth_name}`;
+                                const dongCode = `${result[0].code}`;
                                 setLocation(dongName); // 상태 업데이트
+                                setLocationCode(dongCode);
                                 localStorage.setItem("startLocation", dongName); // 첫 위치 저장
+                                localStorage.setItem("locationCode", dongCode);
                             }
                         });
                         previousPosition.current = newPos; // 초기 위치 설정
@@ -298,13 +303,56 @@ const Walk = () => {
         setShowSaveScreen(true); // 저장 화면으로 전환
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
         console.log("산책 정보 저장");
 
-        // 산책 정보를 저장 후, localStorage에서 polylinePath와 startLocation 삭제
-        localStorage.removeItem("startLocation");
-        localStorage.removeItem("polylinePath");
-        window.location.href = "/record";
+        try {
+            const response = await api.post(
+                '/api/trail/save',
+                {
+                    name: name,
+                    km: distance,
+                    pace: formatPace(),
+                    time: formatTime(),
+                    perHour: calculateSpeed(),
+                    locationCode: locationCode,
+                    spotLists: polylinePath.map(p => ({ la: p.Ma, lo: p.La })),
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
+
+            const trailId = response.data.trailId;
+
+            if (mapImage) {
+                const formData = new FormData();
+                const blob = await fetch(mapImage).then((res) => res.blob());
+                formData.append("file", blob, "mapImage.png");
+
+                await api.post(`/api/trail/${trailId}/image`, formData, {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+                console.log("이미지 업로드 완료");
+            }
+
+            localStorage.removeItem("startLocation");
+            localStorage.removeItem("polylinePath");
+            window.location.href = "/record";
+        } catch (error) {
+            console.error("산책 정보 저장 중 오류 발생:", error);
+        }
+    };
+
+
+    const handleNameChange = (e) => {
+        setName(e.target.value);
     };
 
     // 시각적 시간 포맷팅
@@ -334,10 +382,14 @@ const Walk = () => {
                 <Header />
                 {showSaveScreen ? (
                     <SaveContent>
-                        <Input placeholder="산책로명을 입력하세요." />
+                        <Input
+                            placeholder="산책로명을 입력하세요."
+                            value={name}
+                            onChange={handleNameChange}
+                        />
                         <LocationWrapper>
                             <LocationIcon src="/location.png" alt="location" />
-                            <LocationName>{location}</LocationName> {/* 저장된 위치 출력 */}
+                            <LocationName>{location}</LocationName>
                         </LocationWrapper>
                         {mapImage ? (
                             <img src={mapImage} alt="산책 경로 캡처" />
