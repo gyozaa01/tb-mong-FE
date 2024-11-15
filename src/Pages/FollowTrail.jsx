@@ -50,7 +50,7 @@ const FollowTrail = () => {
                         map: map,
                         path: path,
                         strokeWeight: 5,
-                        strokeColor: "#FF0000",
+                        strokeColor: "#00a878",
                         strokeOpacity: 0.7,
                         strokeStyle: "solid",
                     });
@@ -67,7 +67,7 @@ const FollowTrail = () => {
                 <MapWrapper>
                     <div id="map" style={{ width: "100%", height: "100%" }}></div>
                 </MapWrapper>
-                <BottomNav />
+                <StyledBottomNav />
             </AppWrapper>
         </Container>
     );
@@ -101,6 +101,13 @@ const MapWrapper = styled.div`
     background-color: #ffffff;
     border-radius: 10px;
     overflow: hidden;
+`;
+
+const StyledBottomNav = styled(BottomNav)`
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    z-index: 10; /* 맨 위 레이어에 배치 */
 `;
 
 export default FollowTrail;
