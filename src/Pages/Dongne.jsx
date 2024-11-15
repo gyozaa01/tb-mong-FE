@@ -30,23 +30,33 @@ const Dongne = () => {
     }, []);
 
     const fetchWalkRecords = useCallback(async () => {
+        if (!neighborhoodName) return; // neighborhoodName이 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/trails?locationId=${neighborhoodName}`);
+            const response = await api.get(`/api/dongne/trails?locationId=${neighborhoodName}`, {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+                }
+            });
             setWalkRecords(response.data);
         } catch (error) {
             console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
         }
     }, [neighborhoodName]);
-
+    
     const fetchTopUser = useCallback(async () => {
+        if (!neighborhoodName) return; // neighborhoodName이 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/top-user?locationId=${neighborhoodName}`);
+            const response = await api.get(`/api/dongne/top-user?locationId=${neighborhoodName}`, {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+                }
+            });
             setTopUser(response.data.kmTopUser);
         } catch (error) {
             console.error('1위 유저 데이터를 불러오는 중 오류 발생:', error);
         }
     }, [neighborhoodName]);
-
+    
     useEffect(() => {
         fetchNeighborhoodName();
         fetchWalkRecords();
