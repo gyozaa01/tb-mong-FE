@@ -430,16 +430,8 @@ const PageButton = styled.div`
     font-size: 16px;
     color: ${(props) => (props.active ? '#51B47D' : 'black')};
     cursor: pointer;
-    background-color: ${(props) => (props.active ? '#E5F7EF' : 'white')};
-    border-radius: 5px;
     font-family: 'DNFBitBitv2';
-    border: 1px solid ${(props) => (props.active ? '#51B47D' : '#ddd')};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 30px;
 `;
-
 
 const StyledBottomNav = styled(BottomNav)`
     position: fixed;
