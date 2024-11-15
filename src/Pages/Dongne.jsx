@@ -9,6 +9,7 @@ const WRAPPER_WIDTH = '375px';
 
 const Dongne = () => {
     const [neighborhoodName, setNeighborhoodName] = useState('');
+    const [locationCode, setLocationCode] = useState('');
     const [sortOption, setSortOption] = useState('like');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
@@ -16,6 +17,7 @@ const Dongne = () => {
     const [walkRecords, setWalkRecords] = useState([]);
     const navigate = useNavigate();
 
+    // 동네 이름과 locationCode를 가져오는 함수
     const fetchNeighborhoodName = useCallback(async () => {
         try {
             const response = await api.get('/api/dongne', {
@@ -24,15 +26,17 @@ const Dongne = () => {
                 }
             });
             setNeighborhoodName(response.data.locationName);
+            setLocationCode(response.data.locationCode); // locationCode 설정
         } catch (error) {
             console.error('동네 이름을 불러오는 중 오류 발생:', error);
         }
     }, []);
 
+    // locationCode를 사용하여 산책로 데이터를 가져오는 함수
     const fetchWalkRecords = useCallback(async () => {
-        if (!neighborhoodName) return; // neighborhoodName이 없으면 함수 종료
+        if (!locationCode) return; // locationCode가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/trails?locationId=${neighborhoodName}`, {
+            const response = await api.get(`/api/dongne/trails?locationId=${locationCode}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
@@ -41,12 +45,13 @@ const Dongne = () => {
         } catch (error) {
             console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
         }
-    }, [neighborhoodName]);
-    
+    }, [locationCode]);
+
+    // locationCode를 사용하여 1위 유저 데이터를 가져오는 함수
     const fetchTopUser = useCallback(async () => {
-        if (!neighborhoodName) return; // neighborhoodName이 없으면 함수 종료
+        if (!locationCode) return; // locationCode가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/top-user?locationId=${neighborhoodName}`, {
+            const response = await api.get(`/api/dongne/top-user?locationId=${locationCode}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
@@ -55,13 +60,16 @@ const Dongne = () => {
         } catch (error) {
             console.error('1위 유저 데이터를 불러오는 중 오류 발생:', error);
         }
-    }, [neighborhoodName]);
-    
+    }, [locationCode]);
+
     useEffect(() => {
         fetchNeighborhoodName();
+    }, [fetchNeighborhoodName]);
+
+    useEffect(() => {
         fetchWalkRecords();
         fetchTopUser();
-    }, [fetchNeighborhoodName, fetchWalkRecords, fetchTopUser]);
+    }, [fetchWalkRecords, fetchTopUser]);
 
     useEffect(() => {
         let filtered = walkRecords;
