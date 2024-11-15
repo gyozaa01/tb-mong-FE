@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
@@ -10,7 +9,6 @@ import api from './Api';
 const WRAPPER_WIDTH = '375px';
 
 const Walk = () => {
-    const { trailId } = useParams(); // URL에서 trailId 파라미터 가져오기
     const [showMap, setShowMap] = useState(false); // 맵 표시 여부
     const [isTracking, setIsTracking] = useState(false); // 추적 상태 (start/pause)
     const [showEndScreen, setShowEndScreen] = useState(false); // 종료 화면 표시 여부
@@ -33,36 +31,10 @@ const Walk = () => {
     const CANVAS_SIZE = 350;
     const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
 
-    // 산책로 데이터를 불러오는 함수
-    useEffect(() => {
-        if (trailId) {
-            const fetchTrailData = async () => {
-                try {
-                    const response = await api.get(`/api/trail/load?trailId=${trailId}`, {
-                        headers: {
-                            Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
-                        }
-                    });
-                    const { name, locationCode, spotLists } = response.data;
-                    setName(name);
-                    setLocationCode(locationCode);
-                    
-                    // initializeMap 호출 후 kakao 객체가 로드될 때까지 기다림
-                    kakao.maps.load(() => {
-                        setPolylinePath(spotLists.map(spot => new kakao.maps.LatLng(spot.la, spot.lo)));
-                    });
-                    
-                } catch (error) {
-                    console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
-                }
-            };
-            fetchTrailData();
-        }
-    }, [trailId]);
-
     // 시각적 시간을 1초마다 증가시키기 위한 useEffect
     useEffect(() => {
         if (isTracking) {
+            // Tracking이 활성화되면 매 1초마다 시간을 증가시킴
             visualTimeRef.current = setInterval(() => {
                 setTime((prevTime) => prevTime + 1); // 시각적 시간 1초씩 증가
             }, 1000);
@@ -100,20 +72,15 @@ const Walk = () => {
             kakao.maps.load(() => {
                 const container = document.getElementById("map");
                 const options = {
-                    center: new kakao.maps.LatLng(37.5665, 126.9780),
+                    center: new kakao.maps.LatLng(37.5665, 126.9780), // 초기 좌표
                     level: 5,
                 };
                 const map = new kakao.maps.Map(container, options);
-                setMapInstance(map);
+                setMapInstance(map); // 맵 인스턴스 저장
             });
         };
         document.head.appendChild(script);
-    };    
-
-    // 처음에 initializeMap 함수를 호출하여 맵 초기화 보장
-    useEffect(() => {
-        initializeMap();
-    }, []);
+    };
 
     // 실시간 위치 추적 시작
     const startTracking = () => {
