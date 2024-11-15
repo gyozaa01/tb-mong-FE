@@ -47,6 +47,7 @@ const HomeButton = styled.div`
         width: 70px;
         height: auto;
     }
+    z-index: 10;
 `;
 
 const BottomNav = () => {
