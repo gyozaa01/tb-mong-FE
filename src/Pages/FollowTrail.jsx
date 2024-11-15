@@ -50,7 +50,7 @@ const FollowTrail = () => {
                         map: map,
                         path: path,
                         strokeWeight: 5,
-                        strokeColor: "#00a878",
+                        strokeColor: "#FF0000",
                         strokeOpacity: 0.7,
                         strokeStyle: "solid",
                     });
@@ -96,8 +96,7 @@ const AppWrapper = styled.div`
 
 const MapWrapper = styled.div`
     width: 100%;
-    height: 100%;
-    flex-grow: 1;
+    height: calc(100% - 100px);
     background-color: #ffffff;
     border-radius: 10px;
     overflow: hidden;
