@@ -47,7 +47,7 @@ const Dongne = () => {
         }
     }, [locationCode]);
 
-    // locationCode를 사용하여 1위 유저 데이터를 가져오는 함수
+    // locationCode를 사용하여 1위 유저 데이터를 가져오는 함수.
     const fetchTopUser = useCallback(async () => {
         if (!locationCode) return; // locationCode가 없으면 함수 종료
         try {
