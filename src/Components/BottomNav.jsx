@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 import api from '../Pages/Api';
@@ -51,9 +51,9 @@ const HomeButton = styled.div`
 
 const BottomNav = () => {
     const navigate = useNavigate();
-    const [locationId, setLocationId] = useState(localStorage.getItem('locationId'));
+    const [locationId, setLocationId] = useState(localStorage.getItem('locationId') || null);
 
-    // 동네 ID를 가져오는 함수
+    // 최신 locationId를 가져오는 함수
     const fetchLocationId = async () => {
         try {
             const response = await api.get('/api/dongne', {
@@ -61,29 +61,24 @@ const BottomNav = () => {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
             });
-            const fetchedLocationId = response.data.id;
-            setLocationId(fetchedLocationId);
+            const fetchedLocationId = response.data.id; // 최신 locationId
+            setLocationId(fetchedLocationId); // 상태에 저장
             localStorage.setItem('locationId', fetchedLocationId); // localStorage에 저장
-            return fetchedLocationId;
         } catch (error) {
-            console.error('동네 정보를 불러오는 중 오류 발생:', error);
-            return null;
+            console.error("동네 정보를 불러오는 중 오류 발생:", error);
         }
     };
 
-    // 동네 버튼 클릭 시 실행되는 함수
-    const handleDongneClick = async () => {
-        let id = locationId;
+    // 컴포넌트가 로드될 때 최신 locationId 가져오기
+    useEffect(() => {
+        fetchLocationId();
+    }, []);
 
-        if (!id) {
-            // locationId가 없는 경우 API 호출로 가져오기
-            id = await fetchLocationId();
-        }
-
-        if (id) {
-            navigate(`/dongne/${id}`);
+    const handleDongneClick = () => {
+        if (locationId) {
+            navigate(`/dongne/${locationId}`);
         } else {
-            alert('동네 정보를 불러올 수 없습니다. 다시 시도해주세요.');
+            alert("동네 정보가 없습니다. 다시 시도해주세요.");
         }
     };
 
