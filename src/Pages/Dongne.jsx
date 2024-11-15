@@ -421,19 +421,25 @@ const NoRecordMessage = styled.p`
 const Pagination = styled.div`
     display: flex;
     justify-content: center;
-    margin-top: 10px;
+    gap: 10px;
+    margin-top: 20px;
 `;
 
-const PageButton = styled.button`
+const PageButton = styled.div`
     padding: 5px 10px;
-    margin: 0 5px;
-    border: none;
-    background-color: ${({ active }) => (active ? "#51B47D" : "#ddd")};
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
     font-size: 16px;
+    color: ${(props) => (props.active ? '#51B47D' : 'black')};
+    cursor: pointer;
+    background-color: ${(props) => (props.active ? '#E5F7EF' : 'white')};
+    border-radius: 5px;
+    font-family: 'DNFBitBitv2';
+    border: 1px solid ${(props) => (props.active ? '#51B47D' : '#ddd')};
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
 `;
+
 
 const StyledBottomNav = styled(BottomNav)`
     position: fixed;
