@@ -49,14 +49,15 @@ const HomeButton = styled.div`
 `;
 
 const BottomNav = () => {
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
+    const locationId = localStorage.getItem('locationId');
 
     return (
         <BottomNavWrapper>
             <NavItem onClick={() => navigate('/walk')}>
                 <span>산책</span>
             </NavItem>
-            <NavItem onClick={() => navigate('/dongne')}>
+            <NavItem onClick={() => navigate(`/dongne/${locationId}`)}>
                 <span>동네</span>
             </NavItem>
 

@@ -79,16 +79,13 @@ const Dongne = () => {
 
     useEffect(() => {
         fetchNeighborhoodName();
-    }, [fetchNeighborhoodName]);
-
-    useEffect(() => {
+        fetchTopUser();
         if (searchQuery) {
             fetchSearchResults(); // 검색어가 있을 때 검색 결과를 가져옴
         } else {
             fetchWalkRecords(); // 검색어가 없을 때 기본 목록을 가져옴
         }
-        fetchTopUser();
-    }, [fetchWalkRecords, fetchSearchResults, fetchTopUser, searchQuery]);
+    }, [fetchNeighborhoodName, fetchWalkRecords, fetchSearchResults, fetchTopUser, searchQuery, locationId]);
 
     useEffect(() => {
         setFilteredRecords(walkRecords);
@@ -115,7 +112,7 @@ const Dongne = () => {
                     <RankingSection>
                         <img src="/win.png" alt="Winner" />
                         <p>{topUser}</p>
-                        <StyledSelect onChange={handleTopUserTypeChange}>
+                        <StyledSelect onChange={handleTopUserTypeChange} value={topUserType}>
                             <option value="kmTopUser">거리왕</option>
                             <option value="countTopUser">횟수왕</option>
                         </StyledSelect>
@@ -126,7 +123,7 @@ const Dongne = () => {
                             <NeighborhoodLabel>{neighborhoodName}</NeighborhoodLabel>
                         </LeftDropdown>
                         <RightDropdown>
-                            <StyledSelect onChange={handleSortOptionChange}>
+                            <StyledSelect onChange={handleSortOptionChange} value={sortOption}>
                                 <option value="like">좋아요순</option>
                                 <option value="recent">최신순</option>
                                 <option value="my_likes">찜한 산책로</option>
