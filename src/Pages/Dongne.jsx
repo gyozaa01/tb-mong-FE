@@ -1,186 +1,166 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import Header from '../Components/Header';
 import BottomNav from '../Components/BottomNav';
-
-// 더미 데이터
-const walkRecords = [
-    {
-        title: '좋아요런',
-        location: '우산동',
-        distance: 4.0,
-        likes: 17,
-        mapImage: '/good_run.png',
-        user: '당당님',
-    },
-    {
-        title: '댕댕이런',
-        location: '서석동',
-        distance: 3.2,
-        likes: 23,
-        mapImage: '/dog_run.png',
-        user: '산책왕',
-    },
-    {
-        title: '빠른런',
-        location: '우산동',
-        distance: 5.2,
-        likes: 11,
-        mapImage: '/fast_run.png',
-        user: '러너',
-    },
-    {
-        title: '즐거운산책',
-        location: '매곡동',
-        distance: 2.8,
-        likes: 9,
-        mapImage: '/joy_walk.png',
-        user: '행복한산책자',
-    },
-    {
-        title: '조용한산책',
-        location: '서석동',
-        distance: 4.1,
-        likes: 5,
-        mapImage: '/quiet_walk.png',
-        user: '산책러',
-    },
-    {
-        title: '도전런',
-        location: '매곡동',
-        distance: 3.5,
-        likes: 15,
-        mapImage: '/challenge_run.png',
-        user: '도전자',
-    },
-];
-
-// 동네별 1위 유저를 관리하는 더미 데이터
-const topUsers = {
-    우산동: '당당님',
-    서석동: '산책왕',
-    매곡동: '도전자',
-};
-
-// 1위 유저 가져오기 함수
-const getTopUserForNeighborhood = (neighborhood) => {
-    return topUsers[neighborhood] || '1위 없음';
-};
+import api from './Api';
+import { useNavigate } from 'react-router-dom';
 
 const WRAPPER_WIDTH = '375px';
 
 const Dongne = () => {
-    const [selectedNeighborhood] = useState('우산동'); // 초기 동네명을 표시할 변수
+    const [neighborhoodName, setNeighborhoodName] = useState('');
     const [sortOption, setSortOption] = useState('like');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
-    const topUser = getTopUserForNeighborhood(selectedNeighborhood); // 초기 1위 유저 설정
+    const [topUser, setTopUser] = useState('');
+    const [walkRecords, setWalkRecords] = useState([]);
+    const navigate = useNavigate();
+
+    const fetchNeighborhoodName = useCallback(async () => {
+        try {
+            const response = await api.get('/api/dongne', {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+                }
+            });
+            setNeighborhoodName(response.data.locationName);
+        } catch (error) {
+            console.error('동네 이름을 불러오는 중 오류 발생:', error);
+        }
+    }, []);
+
+    const fetchWalkRecords = useCallback(async () => {
+        try {
+            const response = await api.get(`/api/dongne/trails?locationId=${neighborhoodName}`);
+            setWalkRecords(response.data);
+        } catch (error) {
+            console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
+        }
+    }, [neighborhoodName]);
+
+    const fetchTopUser = useCallback(async () => {
+        try {
+            const response = await api.get(`/api/dongne/top-user?locationId=${neighborhoodName}`);
+            setTopUser(response.data.kmTopUser);
+        } catch (error) {
+            console.error('1위 유저 데이터를 불러오는 중 오류 발생:', error);
+        }
+    }, [neighborhoodName]);
+
+    useEffect(() => {
+        fetchNeighborhoodName();
+        fetchWalkRecords();
+        fetchTopUser();
+    }, [fetchNeighborhoodName, fetchWalkRecords, fetchTopUser]);
 
     useEffect(() => {
         let filtered = walkRecords;
 
-        // 동네 필터링
-        filtered = filtered.filter(record => record.location === selectedNeighborhood);
-
-        // 검색어 필터링
         if (searchQuery) {
-            filtered = filtered.filter(record => record.title.includes(searchQuery));
+            filtered = filtered.filter(record => record.name.includes(searchQuery));
         }
 
-        // 정렬 필터링
         switch (sortOption) {
             case 'like':
-                filtered = filtered.sort((a, b) => b.likes - a.likes);
+                filtered = filtered.sort((a, b) => b.like_count - a.like_count);
                 break;
             case 'recent':
-                filtered = filtered.sort((a, b) => b.likes - a.likes);
+                filtered = filtered.sort((a, b) => b.id - a.id);
                 break;
             case 'my_likes':
-                filtered = filtered.filter(record => record.likes > 10);
+                filtered = filtered.filter(record => record.like_count > 10);
                 break;
             case 'my_walks':
-                filtered = filtered.filter(record => record.distance > 3);
+                filtered = filtered.filter(record => record.km > 3);
                 break;
             default:
                 break;
         }
 
         setFilteredRecords(filtered);
-    }, [selectedNeighborhood, sortOption, searchQuery]);
+    }, [walkRecords, sortOption, searchQuery]);
+
+    const handleSortOptionChange = (e) => {
+        setSortOption(e.target.value);
+    };
+
+    const handleStartTrail = (trailId) => {
+        navigate(`/walk/${trailId}`);
+    };
 
     return (
         <Container>
-        <AppWrapper>
-            <Header />
+            <AppWrapper>
+                <Header />
 
-            <MainSection>
-            <RankingSection>
-                <img src="/win.png" alt="Winner" />
-                <p>{topUser}</p>
-            </RankingSection>
+                <MainSection>
+                    <RankingSection>
+                        <img src="/win.png" alt="Winner" />
+                        <p>{topUser}</p>
+                    </RankingSection>
 
-            <DropdownSection>
-                <LeftDropdown>
-                    <NeighborhoodLabel>{selectedNeighborhood}</NeighborhoodLabel>
-                </LeftDropdown>
-                <RightDropdown>
-                    <select onChange={(e) => setSortOption(e.target.value)}>
-                        <option value="like">좋아요순</option>
-                        <option value="recent">최신순</option>
-                        <option value="my_likes">찜한 산책로</option>
-                        <option value="my_walks">내가 한 산책</option>
-                    </select>
-                </RightDropdown>
-            </DropdownSection>
+                    <DropdownSection>
+                        <LeftDropdown>
+                            <NeighborhoodLabel>{neighborhoodName}</NeighborhoodLabel>
+                        </LeftDropdown>
+                        <RightDropdown>
+                            <select onChange={handleSortOptionChange}>
+                                <option value="like">좋아요순</option>
+                                <option value="recent">최신순</option>
+                                <option value="my_likes">찜한 산책로</option>
+                                <option value="my_walks">내가 한 산책</option>
+                            </select>
+                        </RightDropdown>
+                    </DropdownSection>
 
-            <SearchBar>
-                <input
-                    type="text"
-                    placeholder="산책로 검색"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <img src="/search.png" alt="Search Icon" />
-            </SearchBar>
+                    <SearchBar>
+                        <input
+                            type="text"
+                            placeholder="산책로 검색"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <img src="/search.png" alt="Search Icon" />
+                    </SearchBar>
 
-            <WalkList>
-                {filteredRecords.length > 0 ? (
-                filteredRecords.map((record, index) => (
-                    <RecordItem key={index}>
-                        <MapImage src={record.mapImage} alt={record.title} />
-                        <RecordDetails>
-                            <Title>{record.title}</Title>
-                            <Detail>
-                                <img src="/location.png" alt="Location Icon" />
-                                <Location>{record.location}</Location>
-                            </Detail>
-                            <Detail>
-                                <img src="/logo.png" alt="Distance Icon" />
-                                <Distance>{record.distance} km</Distance>
-                            </Detail>
-                            <Detail>
-                                <img src="/user.png" alt="User Icon" />
-                                <User>{record.user}</User>
-                            </Detail>
-                        </RecordDetails>
-                        <RightSection>
-                            <Likes>
-                                <img src="/heart.png" alt="Likes" /> {record.likes}
-                            </Likes>
-                            <StartButton>
-                                <img src="/start.png" alt="Start" />
-                            </StartButton>
-                        </RightSection>
-                    </RecordItem>
-                ))
-                ) : (
-                <NoRecordMessage>해당 조건에 맞는 산책로가 없습니다.</NoRecordMessage>
-                )}
-            </WalkList>
-            </MainSection>
+                    <WalkList>
+                        {filteredRecords.length > 0 ? (
+                            filteredRecords.map((record, index) => (
+                                <RecordItem key={index}>
+                                    <MapImage src={record.image || '/default.png'} alt={record.name} />
+                                    <RecordDetails>
+                                        <Title>{record.name}</Title>
+                                        <Detail>
+                                            <img src="/location.png" alt="Location Icon" />
+                                            <Location>{record.location_name}</Location>
+                                        </Detail>
+                                        <Detail>
+                                            <img src="/logo.png" alt="Distance Icon" />
+                                            <Distance>{record.km} km</Distance>
+                                        </Detail>
+                                        <Detail>
+                                            <img src="/user.png" alt="User Icon" />
+                                            <User>{record.nickname}</User>
+                                        </Detail>
+                                    </RecordDetails>
+                                    <RightSection>
+                                        <Likes>
+                                            <img src="/heart.png" alt="Likes" /> {record.like_count}
+                                        </Likes>
+                                        <StartButton onClick={() => handleStartTrail(record.id)}>
+                                            <img src="/start.png" alt="Start" />
+                                        </StartButton>
+                                    </RightSection>
+                                </RecordItem>
+                            ))
+                        ) : (
+                            <NoRecordMessage>해당 조건에 맞는 산책로가 없습니다.</NoRecordMessage>
+                        )}
+                    </WalkList>
+                </MainSection>
 
-            <StyledBottomNav />
-        </AppWrapper>
+                <StyledBottomNav />
+            </AppWrapper>
         </Container>
     );
 };
