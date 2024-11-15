@@ -103,6 +103,25 @@ const Dongne = () => {
         navigate(`/walk/${trailId}`);
     };
 
+    // 좋아요 클릭 핸들러
+    const handleLikeClick = async (trailId) => {
+        try {
+            const response = await api.post(`/api/dongne/like?trailId=${trailId}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+                }
+            });
+            // 좋아요 수를 업데이트
+            setWalkRecords((prevRecords) =>
+                prevRecords.map((record) =>
+                    record.id === trailId ? { ...record, like_count: response.data.like_count } : record
+                )
+            );
+        } catch (error) {
+            console.error("좋아요 요청 중 오류 발생:", error);
+        }
+    };
+
     return (
         <Container>
             <AppWrapper>
@@ -163,7 +182,7 @@ const Dongne = () => {
                                         </Detail>
                                     </RecordDetails>
                                     <RightSection>
-                                        <Likes>
+                                        <Likes onClick={() => handleLikeClick(record.id)}>
                                             <img src="/heart.png" alt="Likes" /> {record.like_count}
                                         </Likes>
                                         <StartButton onClick={() => handleStartTrail(record.id)}>
