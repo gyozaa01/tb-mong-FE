@@ -3,13 +3,13 @@ import styled from 'styled-components';
 import Header from '../Components/Header';
 import BottomNav from '../Components/BottomNav';
 import api from './Api';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const WRAPPER_WIDTH = '375px';
 
 const Dongne = () => {
+    const { locationId } = useParams(); // URL에서 locationId 파라미터 가져오기
     const [neighborhoodName, setNeighborhoodName] = useState('');
-    const [locationCode, setLocationCode] = useState('');
     const [sortOption, setSortOption] = useState('like');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
@@ -18,26 +18,25 @@ const Dongne = () => {
     const [walkRecords, setWalkRecords] = useState([]);
     const navigate = useNavigate();
 
-    // 동네 이름과 locationCode를 가져오는 함수
+    // 동네 이름을 가져오는 함수
     const fetchNeighborhoodName = useCallback(async () => {
         try {
-            const response = await api.get('/api/dongne', {
+            const response = await api.get(`/api/dongne?locationId=${locationId}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
             });
             setNeighborhoodName(response.data.locationName);
-            setLocationCode(response.data.locationCode); // locationCode 설정
         } catch (error) {
             console.error('동네 이름을 불러오는 중 오류 발생:', error);
         }
-    }, []);
+    }, [locationId]);
 
-    // locationCode와 topUserType에 따라 1위 유저 데이터를 가져오는 함수
+    // topUserType에 따라 1위 유저 데이터를 가져오는 함수
     const fetchTopUser = useCallback(async () => {
-        if (!locationCode) return; // locationCode가 없으면 함수 종료
+        if (!locationId) return; // locationId가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/top-user?locationId=${locationCode}`, {
+            const response = await api.get(`/api/dongne/top-user?locationId=${locationId}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
@@ -46,13 +45,13 @@ const Dongne = () => {
         } catch (error) {
             console.error('1위 유저 데이터를 불러오는 중 오류 발생:', error);
         }
-    }, [locationCode, topUserType]);
+    }, [locationId, topUserType]);
 
     // 기본 목록을 가져오는 함수
     const fetchWalkRecords = useCallback(async () => {
-        if (!locationCode) return; // locationCode가 없으면 함수 종료
+        if (!locationId) return; // locationId가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/trails?locationId=${locationCode}`, {
+            const response = await api.get(`/api/dongne/trails?locationId=${locationId}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
@@ -61,13 +60,13 @@ const Dongne = () => {
         } catch (error) {
             console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
         }
-    }, [locationCode]);
+    }, [locationId]);
 
     // 검색 기능을 사용한 목록을 가져오는 함수
     const fetchSearchResults = useCallback(async () => {
-        if (!locationCode) return; // locationCode가 없으면 함수 종료
+        if (!locationId) return; // locationId가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/search?locationId=${locationCode}&trailSortOption=${sortOption.toUpperCase()}&keyword=${searchQuery || ''}`, {
+            const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${searchQuery || ''}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
@@ -76,7 +75,7 @@ const Dongne = () => {
         } catch (error) {
             console.error('검색 결과를 불러오는 중 오류 발생:', error);
         }
-    }, [locationCode, sortOption, searchQuery]);
+    }, [locationId, sortOption, searchQuery]);
 
     useEffect(() => {
         fetchNeighborhoodName();

@@ -14,19 +14,19 @@ import Dongne from './Pages/Dongne';
 const App = () => {
   return (
     <Router>
-        <Routes>
-            <Route path="/" element={<Start />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/dongne-setting" element={<DongneSetting />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/setting" element={<Setting />} />
-            <Route path="/nickname" element={<Nickname />} />
-            <Route path="/walk" element={<Walk />} /> {/* trailId 없이 새로운 산책 */}
-            <Route path="/walk/:trailId" element={<Walk />} /> {/* trailId가 있는 경우 */}
-            <Route path="/record" element={<Record />} />
-            <Route path="/dogam" element={<Dogam />} />
-            <Route path="/dongne" element={<Dongne />} />
-        </Routes>
+      <Routes>
+        <Route path="/" element={<Start />} />
+        <Route path="/auth" element={<Auth />} />
+        <Route path="/dongne-setting" element={<DongneSetting />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/setting" element={<Setting />} />
+        <Route path="/nickname" element={<Nickname />} />
+        <Route path="/walk" element={<Walk />} /> {/* trailId 없이 새로운 산책 */}
+        <Route path="/walk/:trailId" element={<Walk />} /> {/* trailId가 있는 경우 */}
+        <Route path="/record" element={<Record />} />
+        <Route path="/dogam" element={<Dogam />} />
+        <Route path="/dongne/:locationId" element={<Dongne />} /> {/* locationId가 있는 경우 */}
+      </Routes>
     </Router>
   );
 };
