@@ -273,7 +273,7 @@ const Back = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff;
+  background-color: transparent;
   transform: rotateY(180deg);
   transition: transform 0.6s;
 `;
