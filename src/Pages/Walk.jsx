@@ -46,7 +46,12 @@ const Walk = () => {
                     const { name, locationCode, spotLists } = response.data;
                     setName(name);
                     setLocationCode(locationCode);
-                    setPolylinePath(spotLists.map(spot => new kakao.maps.LatLng(spot.la, spot.lo)));
+                    
+                    // initializeMap 호출 후 kakao 객체가 로드될 때까지 기다림
+                    kakao.maps.load(() => {
+                        setPolylinePath(spotLists.map(spot => new kakao.maps.LatLng(spot.la, spot.lo)));
+                    });
+                    
                 } catch (error) {
                     console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
                 }
@@ -103,7 +108,12 @@ const Walk = () => {
             });
         };
         document.head.appendChild(script);
-    };
+    };    
+
+    // 처음에 initializeMap 함수를 호출하여 맵 초기화 보장
+    useEffect(() => {
+        initializeMap();
+    }, []);
 
     // 실시간 위치 추적 시작
     const startTracking = () => {
