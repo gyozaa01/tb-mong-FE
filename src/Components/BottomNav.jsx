@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
+import api from '../Pages/Api';
 
 const BottomNavWrapper = styled.div`
     width: 90%;
@@ -50,14 +51,48 @@ const HomeButton = styled.div`
 
 const BottomNav = () => {
     const navigate = useNavigate();
-    const locationId = localStorage.getItem('locationId');
+    const [locationId, setLocationId] = useState(localStorage.getItem('locationId'));
+
+    // 동네 ID를 가져오는 함수
+    const fetchLocationId = async () => {
+        try {
+            const response = await api.get('/api/dongne', {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+                }
+            });
+            const fetchedLocationId = response.data.id;
+            setLocationId(fetchedLocationId);
+            localStorage.setItem('locationId', fetchedLocationId); // localStorage에 저장
+            return fetchedLocationId;
+        } catch (error) {
+            console.error('동네 정보를 불러오는 중 오류 발생:', error);
+            return null;
+        }
+    };
+
+    // 동네 버튼 클릭 시 실행되는 함수
+    const handleDongneClick = async () => {
+        let id = locationId;
+
+        if (!id) {
+            // locationId가 없는 경우 API 호출로 가져오기
+            id = await fetchLocationId();
+        }
+
+        if (id) {
+            navigate(`/dongne/${id}`);
+        } else {
+            alert('동네 정보를 불러올 수 없습니다. 다시 시도해주세요.');
+        }
+    };
 
     return (
         <BottomNavWrapper>
             <NavItem onClick={() => navigate('/walk')}>
                 <span>산책</span>
             </NavItem>
-            <NavItem onClick={() => navigate(`/dongne/${locationId}`)}>
+            <NavItem onClick={handleDongneClick}>
                 <span>동네</span>
             </NavItem>
 
