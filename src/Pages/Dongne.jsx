@@ -64,7 +64,7 @@ const Dongne = () => {
 
     // 검색 기능을 사용한 목록을 가져오는 함수
     const fetchSearchResults = useCallback(async () => {
-        if (!locationId) return; // locationId가 없으면 함수 종료
+        if (!locationId) return;
         try {
             const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${searchQuery || ''}`, {
                 headers: {
