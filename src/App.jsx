@@ -21,7 +21,8 @@ const App = () => {
             <Route path="/home" element={<Home />} />
             <Route path="/setting" element={<Setting />} />
             <Route path="/nickname" element={<Nickname />} />
-            <Route path="/walk" element={<Walk />} />
+            <Route path="/walk" element={<Walk />} /> {/* trailId 없이 새로운 산책 */}
+            <Route path="/walk/:trailId" element={<Walk />} /> {/* trailId가 있는 경우 */}
             <Route path="/record" element={<Record />} />
             <Route path="/dogam" element={<Dogam />} />
             <Route path="/dongne" element={<Dongne />} />
