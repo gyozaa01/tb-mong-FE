@@ -6,6 +6,7 @@ import api from './Api';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const WRAPPER_WIDTH = '375px';
+const ITEMS_PER_PAGE = 5; // 페이지당 항목 수
 
 const Dongne = () => {
     const { locationId } = useParams(); // URL에서 locationId 파라미터 가져오기
@@ -16,6 +17,7 @@ const Dongne = () => {
     const [topUser, setTopUser] = useState('');
     const [topUserType, setTopUserType] = useState('kmTopUser'); // 기본 값: 거리왕
     const [walkRecords, setWalkRecords] = useState([]);
+    const [currentPage, setCurrentPage] = useState(1); // 현재 페이지 번호
     const navigate = useNavigate();
 
     // 동네 이름을 가져오는 함수
@@ -119,13 +121,19 @@ const Dongne = () => {
             );
         } catch (error) {
             if (error.response && error.response.status === 400) {
-                // 400 에러가 "이미 좋아요가 눌러졌습니다" 메시지일 때 alert로 띄움
                 alert("이미 좋아요가 눌러진 산책로입니다.");
             } else {
                 console.error("좋아요 요청 중 오류 발생:", error);
             }
         }
-    };    
+    };
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+    };
+
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedRecords = filteredRecords.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <Container>
@@ -135,7 +143,7 @@ const Dongne = () => {
                 <MainSection>
                     <RankingSection>
                         <img src="/win.png" alt="Winner" />
-                        <p>{topUser}</p>
+                        <p>{topUser}님</p>
                         <StyledSelect onChange={handleTopUserTypeChange} value={topUserType}>
                             <option value="kmTopUser">거리왕</option>
                             <option value="countTopUser">횟수왕</option>
@@ -167,8 +175,8 @@ const Dongne = () => {
                     </SearchBar>
 
                     <WalkList>
-                        {filteredRecords.length > 0 ? (
-                            filteredRecords.map((record, index) => (
+                        {paginatedRecords.length > 0 ? (
+                            paginatedRecords.map((record, index) => (
                                 <RecordItem key={index}>
                                     <MapImage src={record.image || '/default.png'} alt={record.name} />
                                     <RecordDetails>
@@ -183,7 +191,7 @@ const Dongne = () => {
                                         </Detail>
                                         <Detail>
                                             <img src="/user.png" alt="User Icon" />
-                                            <User>{record.nickname}</User>
+                                            <User>{record.nickname}님</User>
                                         </Detail>
                                     </RecordDetails>
                                     <RightSection>
@@ -200,6 +208,18 @@ const Dongne = () => {
                             <NoRecordMessage>해당 조건에 맞는 산책로가 없습니다.</NoRecordMessage>
                         )}
                     </WalkList>
+
+                    <Pagination>
+                        {Array.from({ length: Math.ceil(filteredRecords.length / ITEMS_PER_PAGE) }, (_, index) => (
+                            <PageButton
+                                key={index}
+                                active={index + 1 === currentPage}
+                                onClick={() => handlePageChange(index + 1)}
+                            >
+                                {index + 1}
+                            </PageButton>
+                        ))}
+                    </Pagination>
                 </MainSection>
 
                 <StyledBottomNav />
@@ -234,6 +254,7 @@ const MainSection = styled.div`
     width: 100%;
     flex-grow: 1;
     padding-bottom: 100px;
+    overflow-y: auto;
 `;
 
 const RankingSection = styled.div`
@@ -395,6 +416,23 @@ const NoRecordMessage = styled.p`
     text-align: center;
     font-size: 16px;
     color: #999;
+`;
+
+const Pagination = styled.div`
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+`;
+
+const PageButton = styled.button`
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    background-color: ${({ active }) => (active ? "#51B47D" : "#ddd")};
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
 `;
 
 const StyledBottomNav = styled(BottomNav)`
