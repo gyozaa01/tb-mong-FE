@@ -14,6 +14,7 @@ const Dongne = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
     const [topUser, setTopUser] = useState('');
+    const [topUserType, setTopUserType] = useState('kmTopUser'); // 기본 값: 거리왕
     const [walkRecords, setWalkRecords] = useState([]);
     const navigate = useNavigate();
 
@@ -32,7 +33,22 @@ const Dongne = () => {
         }
     }, []);
 
-    // locationCode를 사용하여 산책로 데이터를 가져오는 함수
+    // locationCode와 topUserType에 따라 1위 유저 데이터를 가져오는 함수
+    const fetchTopUser = useCallback(async () => {
+        if (!locationCode) return; // locationCode가 없으면 함수 종료
+        try {
+            const response = await api.get(`/api/dongne/top-user?locationId=${locationCode}`, {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+                }
+            });
+            setTopUser(response.data[topUserType]);
+        } catch (error) {
+            console.error('1위 유저 데이터를 불러오는 중 오류 발생:', error);
+        }
+    }, [locationCode, topUserType]);
+
+    // 기본 목록을 가져오는 함수
     const fetchWalkRecords = useCallback(async () => {
         if (!locationCode) return; // locationCode가 없으면 함수 종료
         try {
@@ -47,59 +63,44 @@ const Dongne = () => {
         }
     }, [locationCode]);
 
-    // locationCode를 사용하여 1위 유저 데이터를 가져오는 함수.
-    const fetchTopUser = useCallback(async () => {
+    // 검색 기능을 사용한 목록을 가져오는 함수
+    const fetchSearchResults = useCallback(async () => {
         if (!locationCode) return; // locationCode가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/top-user?locationId=${locationCode}`, {
+            const response = await api.get(`/api/dongne/search?locationId=${locationCode}&trailSortOption=${sortOption.toUpperCase()}&keyword=${searchQuery || ''}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
                 }
             });
-            setTopUser(response.data.kmTopUser);
+            setFilteredRecords(response.data);
         } catch (error) {
-            console.error('1위 유저 데이터를 불러오는 중 오류 발생:', error);
+            console.error('검색 결과를 불러오는 중 오류 발생:', error);
         }
-    }, [locationCode]);
+    }, [locationCode, sortOption, searchQuery]);
 
     useEffect(() => {
         fetchNeighborhoodName();
     }, [fetchNeighborhoodName]);
 
     useEffect(() => {
-        fetchWalkRecords();
+        if (searchQuery) {
+            fetchSearchResults(); // 검색어가 있을 때 검색 결과를 가져옴
+        } else {
+            fetchWalkRecords(); // 검색어가 없을 때 기본 목록을 가져옴
+        }
         fetchTopUser();
-    }, [fetchWalkRecords, fetchTopUser]);
+    }, [fetchWalkRecords, fetchSearchResults, fetchTopUser, searchQuery]);
 
     useEffect(() => {
-        let filtered = walkRecords;
-
-        if (searchQuery) {
-            filtered = filtered.filter(record => record.name.includes(searchQuery));
-        }
-
-        switch (sortOption) {
-            case 'like':
-                filtered = filtered.sort((a, b) => b.like_count - a.like_count);
-                break;
-            case 'recent':
-                filtered = filtered.sort((a, b) => b.id - a.id);
-                break;
-            case 'my_likes':
-                filtered = filtered.filter(record => record.like_count > 10);
-                break;
-            case 'my_walks':
-                filtered = filtered.filter(record => record.km > 3);
-                break;
-            default:
-                break;
-        }
-
-        setFilteredRecords(filtered);
-    }, [walkRecords, sortOption, searchQuery]);
+        setFilteredRecords(walkRecords);
+    }, [walkRecords]);
 
     const handleSortOptionChange = (e) => {
         setSortOption(e.target.value);
+    };
+
+    const handleTopUserTypeChange = (e) => {
+        setTopUserType(e.target.value); // topUserType 설정
     };
 
     const handleStartTrail = (trailId) => {
@@ -115,6 +116,10 @@ const Dongne = () => {
                     <RankingSection>
                         <img src="/win.png" alt="Winner" />
                         <p>{topUser}</p>
+                        <StyledSelect onChange={handleTopUserTypeChange}>
+                            <option value="kmTopUser">거리왕</option>
+                            <option value="countTopUser">횟수왕</option>
+                        </StyledSelect>
                     </RankingSection>
 
                     <DropdownSection>
@@ -122,12 +127,12 @@ const Dongne = () => {
                             <NeighborhoodLabel>{neighborhoodName}</NeighborhoodLabel>
                         </LeftDropdown>
                         <RightDropdown>
-                            <select onChange={handleSortOptionChange}>
+                            <StyledSelect onChange={handleSortOptionChange}>
                                 <option value="like">좋아요순</option>
                                 <option value="recent">최신순</option>
                                 <option value="my_likes">찜한 산책로</option>
                                 <option value="my_walks">내가 한 산책</option>
-                            </select>
+                            </StyledSelect>
                         </RightDropdown>
                     </DropdownSection>
 
@@ -240,21 +245,21 @@ const LeftDropdown = styled.div`
 const NeighborhoodLabel = styled.span`
     font-size: 14px;
     padding: 5px 10px;
-    font-family:'DNFBitBitv2';
+    font-family: 'DNFBitBitv2';
     background-color: white;
     border: 2px solid #51B47D;
     border-radius: 15px;
 `;
 
-const RightDropdown = styled.div`
-    select {
-        font-size: 14px;
-        padding: 5px 10px;
-        font-family:'DNFBitBitv2';
-        background-color: white;
-        border: 2px solid #51B47D;
-        border-radius: 15px;
-    }
+const RightDropdown = styled.div``;
+
+const StyledSelect = styled.select`
+    font-size: 14px;
+    padding: 5px 10px;
+    font-family: 'DNFBitBitv2';
+    background-color: white;
+    border: 2px solid #51B47D;
+    border-radius: 15px;
 `;
 
 const SearchBar = styled.div`
@@ -262,7 +267,7 @@ const SearchBar = styled.div`
     display: flex;
     align-items: center;
     margin-bottom: 20px;
-  
+
     input {
         width: 100%;
         padding: 8px 40px 8px 8px;
