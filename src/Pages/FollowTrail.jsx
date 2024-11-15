@@ -96,7 +96,7 @@ const AppWrapper = styled.div`
 
 const MapWrapper = styled.div`
     width: 100%;
-    height: calc(100% - 100px);
+    height: calc(100% - 130px);
     background-color: #ffffff;
     border-radius: 10px;
     overflow: hidden;
