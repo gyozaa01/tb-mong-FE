@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import styled from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
+import api from './Api';
 
 /*global kakao*/
 
@@ -23,6 +24,7 @@ const Walk = () => {
     const distanceUpdateRef = useRef(null); // 주기적으로 거리 업데이트를 수행하기 위한 ref
     const watchIdRef = useRef(null); // 위치 추적을 위한 watchId 저장
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
+    const [characterImage, setCharacterImage] = useState(null);
 
     const CANVAS_SIZE = 350;
     const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
@@ -39,6 +41,26 @@ const Walk = () => {
         }
         return () => clearInterval(visualTimeRef.current); // 컴포넌트가 언마운트될 때 타이머 해제
     }, [isTracking]);
+
+    // 대표 캐릭터 이미지 불러오기
+    useEffect(() => {
+        const fetchCharacterImage = async () => {
+            try {
+                const response = await api.get('/api/home/repre-character', {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                        Accept: 'image/jpeg',
+                    },
+                    responseType: 'blob',
+                });
+                const imgUrl = URL.createObjectURL(response.data);
+                setCharacterImage(imgUrl);
+            } catch (error) {
+                console.error('대표 캐릭터 이미지를 불러오는 중 오류 발생:', error);
+            }
+        };
+        fetchCharacterImage();
+    }, []);
 
     // 카카오 맵 초기화 함수
     const initializeMap = () => {
@@ -110,6 +132,26 @@ const Walk = () => {
                             mapInstance.setCenter(newPos); // 맵의 중심을 현재 위치로 설정
                             return updatedPath;
                         });
+
+                        // 대표 캐릭터 마커 설정
+                        if (characterImage) { // characterImage가 로드된 경우에만 마커 생성
+                            const characterMarkerImage = new kakao.maps.MarkerImage(
+                                characterImage,
+                                new kakao.maps.Size(40, 40), // 이미지 크기
+                                { offset: new kakao.maps.Point(20, 20) } // 이미지 중심 좌표 설정
+                            );
+
+                            // 기존 마커 제거 후 새 마커 설정
+                            if (mapInstance.characterMarker) {
+                                mapInstance.characterMarker.setMap(null);
+                            }
+                            const characterMarker = new kakao.maps.Marker({
+                                position: newPos,
+                                image: characterMarkerImage,
+                                map: mapInstance,
+                            });
+                            mapInstance.characterMarker = characterMarker; // 마커를 mapInstance에 저장하여 추적
+                        }
                     }
                 },
                 (error) => console.error("Error in getting geolocation: ", error),
