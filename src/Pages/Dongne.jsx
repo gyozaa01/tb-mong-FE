@@ -118,9 +118,14 @@ const Dongne = () => {
                 )
             );
         } catch (error) {
-            console.error("좋아요 요청 중 오류 발생:", error);
+            if (error.response && error.response.status === 400) {
+                // 400 에러가 "이미 좋아요가 눌러졌습니다" 메시지일 때 alert로 띄움
+                alert("이미 좋아요가 눌러진 산책로입니다.");
+            } else {
+                console.error("좋아요 요청 중 오류 발생:", error);
+            }
         }
-    };
+    };    
 
     return (
         <Container>
