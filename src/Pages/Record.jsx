@@ -253,13 +253,6 @@ const EmptyDay = styled.div`
   height: 50px;
 `;
 
-const FlipCard = styled.div`
-  width: 100%;
-  height: 100%;
-  perspective: 1000px;
-  position: relative;
-`;
-
 const Front = styled.div`
   backface-visibility: hidden;
   position: absolute;
@@ -269,7 +262,6 @@ const Front = styled.div`
   align-items: center;
   justify-content: center;
   background-color: transparent;
-  transform: ${(props) => (props.$isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)')};
   transition: transform 0.6s;
 `;
 
@@ -281,8 +273,25 @@ const Back = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  transform: rotateY(180deg);
   background-color: #fff;
+  transform: rotateY(180deg);
+  transition: transform 0.6s;
+`;
+
+const FlipCard = styled.div`
+  width: 100%;
+  height: 100%;
+  perspective: 1000px;
+  position: relative;
+  cursor: pointer;
+  
+  &:hover ${Front} {
+    transform: rotateY(180deg);
+  }
+  
+  &:hover ${Back} {
+    transform: rotateY(0);
+  }
 `;
 
 const LogoImage = styled.img`
