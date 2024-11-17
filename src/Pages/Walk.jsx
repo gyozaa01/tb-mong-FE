@@ -27,9 +27,27 @@ const Walk = () => {
     const watchIdRef = useRef(null); // 위치 추적을 위한 watchId 저장
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
     const [characterImage, setCharacterImage] = useState(null);
+    const refreshButtonRef = useRef(null); // 현재 위치 버튼
 
     const CANVAS_SIZE = 350;
     const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
+
+    // Wakelock 활성화 (Idle 상태 방지)
+    useEffect(() => {
+        let wakeLock = null;
+        const requestWakeLock = async () => {
+            try {
+                wakeLock = await navigator.wakeLock.request("screen");
+                wakeLock.addEventListener("release", () =>
+                    console.log("Screen Wake Lock released")
+                );
+            } catch (err) {
+                console.error("WakeLock request failed: ", err);
+            }
+        };
+        if (isTracking) requestWakeLock();
+        return () => wakeLock?.release();
+    }, [isTracking]);
 
     // 시각적 시간을 1초마다 증가시키기 위한 useEffect
     useEffect(() => {
@@ -77,14 +95,39 @@ const Walk = () => {
                 };
                 const map = new kakao.maps.Map(container, options);
                 setMapInstance(map); // 맵 인스턴스 저장
+    
+                const zoomControl = new kakao.maps.ZoomControl();
+                map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
+    
+                // 새로고침 버튼 추가 (reset.png 사용)
+                const refreshButton = document.createElement("div");
+                refreshButton.style.cssText = `
+                    position: absolute;
+                    bottom: 50px;
+                    left: 10px;
+                    z-index: 10;
+                    width: 40px;
+                    height: 40px;
+                    cursor: pointer;
+                    background: url('${process.env.PUBLIC_URL}/reset.png') no-repeat center center;
+                    background-size: contain;
+                `;
+                refreshButton.onclick = () => {
+                    if (previousPosition.current && map) {
+                        map.setCenter(previousPosition.current); // 현재 위치로 지도 중심 이동
+                    }
+                };
+                container.appendChild(refreshButton);
+                refreshButtonRef.current = refreshButton;
             });
         };
         document.head.appendChild(script);
     };
 
-    // 실시간 위치 추적 시작
+    // 실시간 위치 추적 시작 (small_start.png 버튼 클릭 시 호출)
     const startTracking = () => {
         setIsTracking(true); // Tracking 시작 상태로 설정
+        setPolylinePath([]); // Polyline 초기화
         if (navigator.geolocation) {
             watchIdRef.current = navigator.geolocation.watchPosition(
                 (position) => {
@@ -116,13 +159,12 @@ const Walk = () => {
                         previousPosition.current = newPos; // 이전 위치를 현재 위치로 업데이트
                     }
 
-                    // Polyline 경로를 설정하고 맵에 반영
+                    // Polyline 업데이트
                     if (mapInstance) {
                         setPolylinePath((prevPath) => {
                             const updatedPath = [...prevPath, newPos];
-                            let polyline = mapInstance.polyline;
-                            if (!polyline) {
-                                polyline = new kakao.maps.Polyline({
+                            if (!mapInstance.polyline) {
+                                const polyline = new kakao.maps.Polyline({
                                     map: mapInstance,
                                     path: updatedPath,
                                     strokeWeight: 5,
@@ -132,7 +174,7 @@ const Walk = () => {
                                 });
                                 mapInstance.polyline = polyline;
                             } else {
-                                polyline.setPath(updatedPath);
+                                mapInstance.polyline.setPath(updatedPath);
                             }
                             mapInstance.setCenter(newPos); // 맵의 중심을 현재 위치로 설정
                             return updatedPath;
@@ -293,9 +335,11 @@ const Walk = () => {
         setMapImage(pathDataUrl);
     };
 
+    // small_start.png 클릭 전까지 Polyline 그려지지 않도록 수정
     const handleStartClick = () => {
-        setShowMap(true); // start.png 클릭 시 맵 표시
-        initializeMap(); // 맵 초기화
+        setShowMap(true); // 맵 표시
+        initializeMap(); // 지도 초기화
+        setIsTracking(false); // Tracking 초기화
     };
 
     const handleEndConfirmation = () => {
