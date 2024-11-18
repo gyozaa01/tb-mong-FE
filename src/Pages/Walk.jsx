@@ -375,11 +375,11 @@ const Walk = () => {
     
             // 지도 이미지가 있을 경우 업로드
             if (mapImage) {
-                // sessionStorage에 지도 이미지 저장
-                sessionStorage.setItem('mapImage', mapImage);
-    
-                const formData = new FormData();
+                // Blob 객체 생성
                 const blob = await fetch(mapImage).then((res) => res.blob());
+    
+                // FormData에 추가
+                const formData = new FormData();
                 formData.append('file', blob, 'mapImage.png');
     
                 // 이미지 업로드 API 호출
@@ -392,20 +392,14 @@ const Walk = () => {
                 console.log('이미지 업로드 완료');
             }
     
-            // sessionStorage에서 이미지 제거
-            sessionStorage.removeItem('mapImage');
-    
             // 저장 후 상태 초기화
             localStorage.removeItem('startLocation');
             localStorage.removeItem('polylinePath');
             window.location.href = '/record'; // 기록 페이지로 이동
         } catch (error) {
             console.error('산책 정보 저장 중 오류 발생:', error);
-    
-            // 에러 발생 시 sessionStorage에서 지도 이미지 제거
-            sessionStorage.removeItem('mapImage');
         }
-    };
+    };    
 
     const handleNameChange = (e) => {
         setName(e.target.value);
