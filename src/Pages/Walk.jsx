@@ -349,8 +349,9 @@ const Walk = () => {
 
     const handleSave = async () => {
         console.log("산책 정보 저장");
-
+    
         try {
+            // 산책 정보 저장 API 호출
             const response = await api.post(
                 '/api/trail/save',
                 {
@@ -360,40 +361,51 @@ const Walk = () => {
                     time: formatTime(),
                     perHour: calculateSpeed(),
                     locationCode: locationCode,
-                    spotLists: polylinePath.map(p => ({ la: p.Ma, lo: p.La })),
+                    spotLists: polylinePath.map((p) => ({ la: p.Ma, lo: p.La })),
                 },
                 {
                     headers: {
                         Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                        "Content-Type": "application/json",
+                        'Content-Type': 'application/json',
                     },
                 }
             );
-
-            const trailId = response.data.trailId;
-
+    
+            const trailId = response.data.trailId; // trailId를 받아옴
+    
+            // 지도 이미지가 있을 경우 업로드
             if (mapImage) {
+                // sessionStorage에 지도 이미지 저장
+                sessionStorage.setItem('mapImage', mapImage);
+    
                 const formData = new FormData();
                 const blob = await fetch(mapImage).then((res) => res.blob());
-                formData.append("file", blob, "mapImage.png");
-
+                formData.append('file', blob, 'mapImage.png');
+    
+                // 이미지 업로드 API 호출
                 await api.post(`/api/trail/${trailId}/image`, formData, {
                     headers: {
                         Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                        "Content-Type": "multipart/form-data",
+                        'Content-Type': 'multipart/form-data',
                     },
                 });
-                console.log("이미지 업로드 완료");
+                console.log('이미지 업로드 완료');
             }
-
-            localStorage.removeItem("startLocation");
-            localStorage.removeItem("polylinePath");
-            window.location.href = "/record";
+    
+            // sessionStorage에서 이미지 제거
+            sessionStorage.removeItem('mapImage');
+    
+            // 저장 후 상태 초기화
+            localStorage.removeItem('startLocation');
+            localStorage.removeItem('polylinePath');
+            window.location.href = '/record'; // 기록 페이지로 이동
         } catch (error) {
-            console.error("산책 정보 저장 중 오류 발생:", error);
+            console.error('산책 정보 저장 중 오류 발생:', error);
+    
+            // 에러 발생 시 sessionStorage에서 지도 이미지 제거
+            sessionStorage.removeItem('mapImage');
         }
     };
-
 
     const handleNameChange = (e) => {
         setName(e.target.value);
@@ -435,8 +447,11 @@ const Walk = () => {
                             <LocationIcon src="/location.png" alt="location" />
                             <LocationName>{location}</LocationName>
                         </LocationWrapper>
-                        {mapImage ? (
-                            <img src={mapImage} alt="산책 경로 캡처" />
+                        {mapImage || sessionStorage.getItem('mapImage') ? (
+                            <img
+                                src={mapImage || sessionStorage.getItem('mapImage')}
+                                alt="산책 경로 캡처"
+                            />
                         ) : (
                             <div>경로 이미지가 없습니다.</div>
                         )}
