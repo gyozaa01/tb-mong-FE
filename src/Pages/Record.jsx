@@ -52,19 +52,38 @@ const Record = () => {
         const response = await api.get(`/api/record/date`, {
           params: { date: formattedDate },
         });
-        setFilteredRecords(response.data);
 
-        // 산책로 이미지를 비동기로 가져오기
-        response.data.forEach(async (record) => {
-          await fetchTrailImage(record.trailId);
-        });
+        const records = response.data;
+        setFilteredRecords(records);
+
+        // 이미지 로드
+        for (const record of records) {
+          if (record.trailId && !imageUrls[record.trailId]) {
+            fetchTrailImage(record.trailId);
+          }
+        }
       } catch (error) {
         console.error('날짜별 기록을 가져오는 중 오류 발생:', error);
       }
     };
 
     fetchDateRecords();
-  }, [selectedDate]);
+  }, [selectedDate, imageUrls]);
+
+  const fetchTrailImage = async (trailId) => {
+    try {
+      const response = await api.get(`/api/trail/${trailId}/image`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+        },
+        responseType: 'blob',
+      });
+      const imageUrl = URL.createObjectURL(response.data);
+      setImageUrls((prev) => ({ ...prev, [trailId]: imageUrl }));
+    } catch (error) {
+      console.error(`Trail 이미지 로드 실패 (trailId: ${trailId}):`, error);
+    }
+  };
 
   const handleDateClick = (date) => {
     // 날짜 선택 시도 시 UTC 기준으로 설정
@@ -130,32 +149,11 @@ const Record = () => {
     return calendarDays;
   };
 
-  // 산책로 이미지 불러오기
-  const fetchTrailImage = async (trailId) => {
-    try {
-      const response = await api.get(`/api/trail/${trailId}/image`, {
-        headers: {
-          Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-        },
-        responseType: 'blob', // Blob 데이터로 응답받기
-      });
-
-      // Blob 데이터를 URL로 변환
-      const imageUrl = URL.createObjectURL(response.data);
-      setImageUrls((prev) => ({ ...prev, [trailId]: imageUrl }));
-    } catch (error) {
-      console.error(`이미지 불러오기 실패 (trailId: ${trailId}):`, error);
-    }
-  };
-
   const renderRecordDetails = () => {
     if (filteredRecords.length > 0) {
-      return filteredRecords.map((record, index) => (
-        <RecordItem key={index}>
-          <MapImage
-            src={imageUrls[record.trailId] || '/placeholder.png'}
-            alt={record.name}
-          />
+      return filteredRecords.map((record) => (
+        <RecordItem key={record.trailId}>
+          <MapImage src={imageUrls[record.trailId] || '/placeholder.png'} alt={record.name} />
           <RecordDetails>
             <Title>{record.name}</Title>
             <Detail>
