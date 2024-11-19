@@ -423,24 +423,29 @@ const Walk = () => {
 
     // 시각적 시간 포맷팅
     const formatTime = () => {
-        const minutes = Math.floor(time / 60);
+        if (time === 0) return "00:00:00"; // 기본값 설정 (HH:mm:ss)
+        const hours = Math.floor(time / 3600);
+        const minutes = Math.floor((time % 3600) / 60);
         const seconds = time % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
     };
+
     // 평균 페이스 계산
     const formatPace = () => {
-        if (distance === 0) return "N/A"; // 거리 0일 때는 계산하지 않음
+        if (distance === 0 || time === 0) return "00:00:00"; // 기본값 설정
         const paceInSeconds = time / distance; // 초/km 계산
         const paceMinutes = Math.floor(paceInSeconds / 60);
         const paceSeconds = Math.floor(paceInSeconds % 60);
-        return `${paceMinutes}' ${String(paceSeconds).padStart(2, '0')}''`; 
+        return `${String(paceMinutes).padStart(2, '0')}' ${String(paceSeconds).padStart(2, '0')}''`;
     };
+
     // 속도 계산
     const calculateSpeed = () => {
-        if (time === 0 || distance === 0) return "N/A"; // 시간 또는 거리 0일 때는 계산하지 않음
+        if (time === 0 || distance === 0) return "0.00"; // 기본값 설정 (시속 0.00km/h)
         const speed = (distance / (time / 3600)).toFixed(2); // 시속(km/h) 계산
-        return `${speed}`;
+        return speed;
     };
+
 
     return (
         <Container>
