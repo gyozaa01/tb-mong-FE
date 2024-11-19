@@ -54,12 +54,17 @@ const Record = () => {
         });
 
         const records = response.data;
+        console.log('받은 records:', records); // 디버깅 로그
         setFilteredRecords(records);
     
         // 모든 이미지 로드가 완료된 후 상태 업데이트
-        const fetchImages = records.map((record) =>
-          record.trailId ? fetchTrailImage(record.trailId) : Promise.resolve()
-        );
+        const fetchImages = records.map((record) => {
+          if (record.id) { // record.id를 사용
+            console.log(`fetchTrailImage 호출 준비: trailId=${record.id}`); // 디버깅 로그
+            return fetchTrailImage(record.id); // trailId로 record.id 전달
+          }
+          return Promise.resolve();
+        });
         await Promise.all(fetchImages);
       } catch (error) {
         console.error('날짜별 기록을 가져오는 중 오류 발생:', error);
@@ -71,7 +76,8 @@ const Record = () => {
 
   const fetchTrailImage = async (trailId) => {
     try {
-      // API 호출
+      console.log(`fetchTrailImage 호출됨: trailId=${trailId}`); // 호출 여부 확인
+  
       const response = await api.get(`/api/trail/${trailId}/image`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
@@ -81,7 +87,8 @@ const Record = () => {
   
       // Blob 데이터를 URL로 변환
       const imageUrl = URL.createObjectURL(response.data);
-      console.log(`이미지 URL 생성됨: trailId=${trailId}, url=${imageUrl}`); // 디버깅용 로그
+      console.log(`이미지 URL 생성됨: trailId=${trailId}, url=${imageUrl}`); // URL 확인
+  
       setImageUrls((prev) => {
         const updatedUrls = { ...prev, [trailId]: imageUrl };
         console.log('Updated imageUrls:', updatedUrls); // 상태 업데이트 확인
@@ -157,12 +164,12 @@ const Record = () => {
   };
 
   const renderRecordDetails = () => {
-    console.log('현재 이미지 URL 상태:', imageUrls); // 디버깅용 로그
+    console.log('현재 이미지 URL 상태:', imageUrls); // 디버깅 로그
     if (filteredRecords.length > 0) {
       return filteredRecords.map((record) => (
-        <RecordItem key={record.trailId}>
+        <RecordItem key={record.id}>
           <MapImage
-            src={imageUrls[record.trailId] || '/placeholder.png'} // 이미지가 없으면 기본 이미지 표시
+            src={imageUrls[record.id] || '/placeholder.png'} // trailId는 record.id로 매핑
             alt={record.name}
           />
           <RecordDetails>
