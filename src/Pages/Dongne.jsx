@@ -84,10 +84,30 @@ const Dongne = () => {
         try {
             const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${searchQuery || ''}`, {
                 headers: {
-                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
-                }
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                },
             });
-            setFilteredRecords(response.data);
+    
+            // 이미지 로드 로직 추가
+            const recordsWithImages = await Promise.all(
+                response.data.map(async (record) => {
+                    try {
+                        const imageResponse = await api.get(`/api/trail/${record.id}/image`, {
+                            headers: {
+                                Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                            },
+                            responseType: 'blob', // 이미지 데이터를 Blob으로 받음
+                        });
+                        const imageUrl = URL.createObjectURL(imageResponse.data);
+                        return { ...record, image: imageUrl };
+                    } catch (error) {
+                        console.error(`이미지 로드 실패 (trailId: ${record.id}):`, error);
+                        return { ...record, image: '/default.png' }; // 기본 이미지로 설정
+                    }
+                })
+            );
+    
+            setFilteredRecords(recordsWithImages); // 상태 업데이트
         } catch (error) {
             console.error('검색 결과를 불러오는 중 오류 발생:', error);
         }
