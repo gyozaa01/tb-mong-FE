@@ -435,7 +435,14 @@ const Walk = () => {
                 },
             });
     
-            const { trailId } = response.data; // 반환된 trailId를 가져옴
+            const { trailId } = response.data;
+    
+            // trailId 확인
+            if (!trailId) {
+                console.error("trailId가 API 응답에서 undefined로 반환되었습니다. 저장을 중단합니다.");
+                return; // trailId가 없으면 저장 중단
+            }
+    
             console.log("산책로 저장 성공, trailId:", trailId);
     
             // 이미지 업로드
