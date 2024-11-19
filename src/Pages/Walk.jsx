@@ -360,38 +360,27 @@ const Walk = () => {
             // 흰색 배경 그리기
             context.fillStyle = "white";
             context.fillRect(0, 0, canvas.width, canvas.height);
-    
-            // 기본 메시지 추가 (원할 경우)
-            context.fillStyle = "black";
-            context.font = "16px Arial";
-            context.textAlign = "center";
-            context.fillText("No Walking Path Captured", canvas.width / 2, canvas.height / 2);
         }
     
         return canvas.toDataURL("image/png");
-    };
+    };    
     
     const uploadImage = async (trailId) => {
-        let imageToUpload = mapImage;
-    
-        // spotlist가 없거나 mapImage가 없는 경우 기본 이미지 생성
-        if (!polylinePath.length || !mapImage) {
-            console.warn("산책 경로가 없어서 기본 이미지를 생성합니다.");
-            imageToUpload = createDefaultImage();
-        }
-    
-        const base64ToBlob = (base64Data) => {
-            const byteString = atob(base64Data.split(",")[1]);
-            const mimeString = base64Data.split(",")[0].split(":")[1].split(";")[0];
-            const arrayBuffer = new Uint8Array(byteString.length);
-            for (let i = 0; i < byteString.length; i++) {
-                arrayBuffer[i] = byteString.charCodeAt(i);
-            }
-            return new Blob([arrayBuffer], { type: mimeString });
-        };
-    
         try {
+            // mapImage가 없는 경우 기본 이미지를 생성
+            let imageToUpload = mapImage || createDefaultImage();
+    
             // Base64 -> Blob 변환
+            const base64ToBlob = (base64Data) => {
+                const byteString = atob(base64Data.split(",")[1]);
+                const mimeString = base64Data.split(",")[0].split(":")[1].split(";")[0];
+                const arrayBuffer = new Uint8Array(byteString.length);
+                for (let i = 0; i < byteString.length; i++) {
+                    arrayBuffer[i] = byteString.charCodeAt(i);
+                }
+                return new Blob([arrayBuffer], { type: mimeString });
+            };
+    
             const blob = base64ToBlob(imageToUpload);
     
             // FormData 생성
@@ -434,23 +423,21 @@ const Walk = () => {
             );
     
             const trailId = response.data.trailId;
-    
-            // 이미지 업로드
-            if (mapImage) {
-                await uploadImage(trailId); // 업로드 함수 호출
-            }
-    
             console.log("산책로 저장 성공:", response.data);
     
+            // 이미지 업로드 호출
+            await uploadImage(trailId);
+    
             // 상태 초기화 및 페이지 이동
-            setMapImage(null); // 이미지 상태 초기화
+            setMapImage(null);
             localStorage.removeItem("startLocation");
             localStorage.removeItem("locationCode");
             window.location.href = "/record";
         } catch (error) {
             console.error("저장 중 오류 발생:", error.response || error);
         }
-    };    
+    };
+    
 
     const handleNameChange = (e) => {
         setName(e.target.value);
