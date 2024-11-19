@@ -347,59 +347,75 @@ const Walk = () => {
         setShowSaveScreen(true); // 저장 화면으로 전환
     };
 
-    const handleSave = async () => {
-        console.log("산책 정보 저장");
+    const uploadImage = async (trailId) => {
+        const base64Image = sessionStorage.getItem("mapImage"); // 로컬스토리지에서 데이터 가져오기
+        if (!base64Image) {
+            console.error("로컬스토리지에서 이미지를 찾을 수 없습니다.");
+            return;
+        }
+    
+        const base64ToBlob = (base64Data) => {
+            const byteString = atob(base64Data.split(",")[1]);
+            const mimeString = base64Data.split(",")[0].split(":")[1].split(";")[0];
+            const arrayBuffer = new Uint8Array(byteString.length);
+            for (let i = 0; i < byteString.length; i++) {
+                arrayBuffer[i] = byteString.charCodeAt(i);
+            }
+            return new Blob([arrayBuffer], { type: mimeString });
+        };
+    
+        const blob = base64ToBlob(base64Image);
+    
+        const formData = new FormData();
+        formData.append("file", blob, "mapImage.png");
     
         try {
-            // 산책 정보 저장 API 호출
+            await api.post(`/api/trail/${trailId}/image`, formData, {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+            console.log("이미지 업로드 완료");
+        } catch (error) {
+            console.error("이미지 업로드 중 오류 발생:", error);
+        }
+    };
+
+    const handleSave = async () => {
+        try {
             const response = await api.post(
-                '/api/trail/save',
+                "/api/trail/save",
                 {
-                    name: name,
+                    name: name || "산책로",
                     km: distance,
                     pace: formatPace(),
                     time: formatTime(),
                     perHour: calculateSpeed(),
-                    locationCode: locationCode,
-                    spotLists: polylinePath.map((p) => ({ la: p.Ma, lo: p.La })),
+                    locationCode,
+                    spotLists: polylinePath.map((p) => ({ la: p.lat, lo: p.lng })),
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
+                        "Content-Type": "application/json",
                     },
                 }
             );
     
-            const trailId = response.data.trailId; // trailId를 받아옴
+            const trailId = response.data.trailId;
     
-            // 지도 이미지가 있을 경우 업로드
             if (mapImage) {
-                // Blob 객체 생성
-                const blob = await fetch(mapImage).then((res) => res.blob());
-    
-                // FormData에 추가
-                const formData = new FormData();
-                formData.append('file', blob, 'mapImage.png');
-    
-                // 이미지 업로드 API 호출
-                await api.post(`/api/trail/${trailId}/image`, formData, {
-                    headers: {
-                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                        'Content-Type': 'multipart/form-data',
-                    },
-                });
-                console.log('이미지 업로드 완료');
+                await uploadImage(trailId); // 업로드 함수 호출
             }
     
-            // 저장 후 상태 초기화
-            localStorage.removeItem('startLocation');
-            localStorage.removeItem('polylinePath');
-            window.location.href = '/record'; // 기록 페이지로 이동
+            localStorage.removeItem("startLocation");
+            localStorage.removeItem("locationCode");
+            window.location.href = "/record";
         } catch (error) {
-            console.error('산책 정보 저장 중 오류 발생:', error);
+            console.error("저장 중 오류 발생:", error);
         }
-    };    
+    };
 
     const handleNameChange = (e) => {
         setName(e.target.value);
