@@ -17,6 +17,7 @@ const Record = () => {
   const [filteredRecords, setFilteredRecords] = useState([]);
   const [monthRecords, setMonthRecords] = useState([]);
   const [flippedDays, setFlippedDays] = useState({});
+  const [imageUrls, setImageUrls] = useState({}); // trailId와 이미지 URL 매핑
 
   // 날짜를 UTC 기준으로 처리하는 함수
   const getFormattedDate = (date) => {
@@ -52,6 +53,11 @@ const Record = () => {
           params: { date: formattedDate },
         });
         setFilteredRecords(response.data);
+
+        // 산책로 이미지를 비동기로 가져오기
+        response.data.forEach(async (record) => {
+          await fetchTrailImage(record.trailId);
+        });
       } catch (error) {
         console.error('날짜별 기록을 가져오는 중 오류 발생:', error);
       }
@@ -124,11 +130,32 @@ const Record = () => {
     return calendarDays;
   };
 
+  // 산책로 이미지 불러오기
+  const fetchTrailImage = async (trailId) => {
+    try {
+      const response = await api.get(`/api/trail/${trailId}/image`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+        },
+        responseType: 'blob', // Blob 데이터로 응답받기
+      });
+
+      // Blob 데이터를 URL로 변환
+      const imageUrl = URL.createObjectURL(response.data);
+      setImageUrls((prev) => ({ ...prev, [trailId]: imageUrl }));
+    } catch (error) {
+      console.error(`이미지 불러오기 실패 (trailId: ${trailId}):`, error);
+    }
+  };
+
   const renderRecordDetails = () => {
     if (filteredRecords.length > 0) {
       return filteredRecords.map((record, index) => (
         <RecordItem key={index}>
-          <MapImage src={record.image || '/placeholder.png'} alt={record.name} />
+          <MapImage
+            src={imageUrls[record.trailId] || '/placeholder.png'}
+            alt={record.name}
+          />
           <RecordDetails>
             <Title>{record.name}</Title>
             <Detail>
