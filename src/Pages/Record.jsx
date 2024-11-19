@@ -169,7 +169,7 @@ const Record = () => {
       return filteredRecords.map((record) => (
         <RecordItem key={record.id}>
           <MapImage
-            src={imageUrls[record.id] || '/placeholder.png'} // trailId는 record.id로 매핑
+            src={imageUrls[record.id] || '/home.png'} // trailId는 record.id로 매핑
             alt={record.name}
           />
           <RecordDetails>

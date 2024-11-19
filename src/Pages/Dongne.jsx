@@ -102,7 +102,7 @@ const Dongne = () => {
                         return { ...record, image: imageUrl };
                     } catch (error) {
                         console.error(`이미지 로드 실패 (trailId: ${record.id}):`, error);
-                        return { ...record, image: '/default.png' }; // 기본 이미지로 설정
+                        return { ...record, image: '/home.png' }; // 기본 이미지로 설정
                     }
                 })
             );
