@@ -55,13 +55,12 @@ const Record = () => {
 
         const records = response.data;
         setFilteredRecords(records);
-
-        // 이미지 로드
-        for (const record of records) {
-          if (record.trailId && !imageUrls[record.trailId]) {
-            fetchTrailImage(record.trailId);
-          }
-        }
+    
+        // 모든 이미지 로드가 완료된 후 상태 업데이트
+        const fetchImages = records.map((record) =>
+          record.trailId ? fetchTrailImage(record.trailId) : Promise.resolve()
+        );
+        await Promise.all(fetchImages);
       } catch (error) {
         console.error('날짜별 기록을 가져오는 중 오류 발생:', error);
       }
@@ -83,9 +82,11 @@ const Record = () => {
       // Blob 데이터를 URL로 변환
       const imageUrl = URL.createObjectURL(response.data);
       console.log(`이미지 URL 생성됨: trailId=${trailId}, url=${imageUrl}`); // 디버깅용 로그
-  
-      // 상태 업데이트
-      setImageUrls((prev) => ({ ...prev, [trailId]: imageUrl }));
+      setImageUrls((prev) => {
+        const updatedUrls = { ...prev, [trailId]: imageUrl };
+        console.log('Updated imageUrls:', updatedUrls); // 상태 업데이트 확인
+        return updatedUrls;
+      });
     } catch (error) {
       console.error(`Trail 이미지 로드 실패 (trailId: ${trailId}):`, error);
     }
