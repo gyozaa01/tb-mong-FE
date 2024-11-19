@@ -424,7 +424,7 @@ const Walk = () => {
                 spotLists: spotLists,
             };
     
-            console.log("전송 데이터:", requestData);
+            console.log("전송 데이터:", JSON.stringify(requestData, null, 2));
     
             const response = await api.post("/api/trail/save", requestData, {
                 headers: {
@@ -462,9 +462,10 @@ const Walk = () => {
     const formatPace = () => {
         if (distance === 0 || time === 0) return "00:00:00"; // 기본값 설정
         const paceInSeconds = time / distance; // 초/km 계산
-        const paceMinutes = Math.floor(paceInSeconds / 60);
+        const paceHours = Math.floor(paceInSeconds / 3600);
+        const paceMinutes = Math.floor((paceInSeconds % 3600) / 60);
         const paceSeconds = Math.floor(paceInSeconds % 60);
-        return `${String(paceMinutes).padStart(2, '0')}' ${String(paceSeconds).padStart(2, '0')}''`;
+        return `${String(paceHours).padStart(2, '0')}:${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`;
     };
 
     // 속도 계산
