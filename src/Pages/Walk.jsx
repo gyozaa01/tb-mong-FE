@@ -348,9 +348,8 @@ const Walk = () => {
     };
 
     const uploadImage = async (trailId) => {
-        const base64Image = sessionStorage.getItem("mapImage"); // 로컬스토리지에서 데이터 가져오기
-        if (!base64Image) {
-            console.error("로컬스토리지에서 이미지를 찾을 수 없습니다.");
+        if (!mapImage) {
+            console.error("이미지가 존재하지 않습니다.");
             return;
         }
     
@@ -364,23 +363,27 @@ const Walk = () => {
             return new Blob([arrayBuffer], { type: mimeString });
         };
     
-        const blob = base64ToBlob(base64Image);
-    
-        const formData = new FormData();
-        formData.append("file", blob, "mapImage.png");
-    
         try {
-            await api.post(`/api/trail/${trailId}/image`, formData, {
+            // Base64 -> Blob 변환
+            const blob = base64ToBlob(mapImage);
+    
+            // FormData 생성
+            const formData = new FormData();
+            formData.append("file", blob, "mapImage.png");
+    
+            // API 호출
+            const response = await api.post(`/api/trail/${trailId}/image`, formData, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
                     "Content-Type": "multipart/form-data",
                 },
             });
-            console.log("이미지 업로드 완료");
+    
+            console.log("이미지 업로드 성공:", response.data);
         } catch (error) {
-            console.error("이미지 업로드 중 오류 발생:", error);
+            console.error("이미지 업로드 중 오류 발생:", error.response || error);
         }
-    };
+    };    
 
     const handleSave = async () => {
         try {
@@ -405,17 +408,22 @@ const Walk = () => {
     
             const trailId = response.data.trailId;
     
+            // 이미지 업로드
             if (mapImage) {
                 await uploadImage(trailId); // 업로드 함수 호출
             }
     
+            console.log("산책로 저장 성공:", response.data);
+    
+            // 상태 초기화 및 페이지 이동
+            setMapImage(null); // 이미지 상태 초기화
             localStorage.removeItem("startLocation");
             localStorage.removeItem("locationCode");
             window.location.href = "/record";
         } catch (error) {
-            console.error("저장 중 오류 발생:", error);
+            console.error("저장 중 오류 발생:", error.response || error);
         }
-    };
+    };    
 
     const handleNameChange = (e) => {
         setName(e.target.value);
