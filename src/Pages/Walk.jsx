@@ -405,43 +405,36 @@ const Walk = () => {
     const handleSave = async () => {
         try {
             const spotLists = polylinePath.map((p) => ({
-                la: p.lat || p.Ma, // 위도
-                lo: p.lng || p.La, // 경도
+                la: String(p.lat || p.Ma),
+                lo: String(p.lng || p.La),
             }));
     
-            // spotLists 배열이 비어 있는지 확인
-            if (spotLists.length === 0) {
-                console.error("spotLists가 비어 있습니다. 데이터를 확인하세요.");
+            if (!locationCode || spotLists.length === 0) {
+                console.error("필수 데이터 누락: locationCode 또는 spotLists가 비어 있습니다.");
                 return;
             }
     
-            // 서버에 데이터 전송
-            const response = await api.post(
-                "/api/trail/save",
-                {
-                    name: name || "산책로",
-                    km: distance,
-                    pace: formatPace(),
-                    time: formatTime(),
-                    perHour: calculateSpeed(),
-                    locationCode,
-                    spotLists, // 변환된 spotLists 사용
+            const requestData = {
+                name: name || "산책로",
+                km: parseFloat(distance.toFixed(2)),
+                pace: formatPace(),
+                time: formatTime(),
+                perHour: parseFloat(calculateSpeed()),
+                locationCode: locationCode,
+                spotLists: spotLists,
+            };
+    
+            console.log("전송 데이터:", requestData);
+    
+            const response = await api.post("/api/trail/save", requestData, {
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
+                    "Content-Type": "application/json",
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            });
     
-            const trailId = response.data.trailId;
             console.log("산책로 저장 성공:", response.data);
-    
-            // 이미지 업로드 호출
-            await uploadImage(trailId);
-    
-            // 상태 초기화 및 페이지 이동
+            await uploadImage(response.data.trailId);
             setMapImage(null);
             localStorage.removeItem("startLocation");
             localStorage.removeItem("locationCode");
@@ -449,7 +442,7 @@ const Walk = () => {
         } catch (error) {
             console.error("저장 중 오류 발생:", error.response || error);
         }
-    };
+    };    
     
 
     const handleNameChange = (e) => {
