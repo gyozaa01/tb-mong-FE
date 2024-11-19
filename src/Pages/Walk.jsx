@@ -366,6 +366,7 @@ const Walk = () => {
     };    
     
     const uploadImage = async (trailId) => {
+        console.log("업로드할 trailId: ", trailId);
         try {
             // mapImage가 없는 경우 기본 이미지를 생성
             let imageToUpload = mapImage || createDefaultImage();
@@ -391,7 +392,7 @@ const Walk = () => {
             const response = await api.post(`/api/trail/${trailId}/image`, formData, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
-                    "Content-Type": "multipart/form-data",
+                    // "Content-Type": "multipart/form-data",
                 },
             });
     
