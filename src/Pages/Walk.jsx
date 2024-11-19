@@ -404,6 +404,7 @@ const Walk = () => {
 
     const handleSave = async () => {
         try {
+            // 산책로 저장 데이터 구성
             const spotLists = polylinePath.map((p) => ({
                 la: String(p.lat || p.Ma),
                 lo: String(p.lng || p.La),
@@ -424,8 +425,9 @@ const Walk = () => {
                 spotLists: spotLists,
             };
     
-            console.log("전송 데이터:", JSON.stringify(requestData, null, 2));
+            console.log("산책로 저장 요청 데이터:", JSON.stringify(requestData, null, 2));
     
+            // 산책로 저장 API 호출
             const response = await api.post("/api/trail/save", requestData, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
@@ -433,8 +435,13 @@ const Walk = () => {
                 },
             });
     
-            console.log("산책로 저장 성공:", response.data);
-            await uploadImage(response.data.trailId);
+            const { trailId } = response.data; // 반환된 trailId를 가져옴
+            console.log("산책로 저장 성공, trailId:", trailId);
+    
+            // 이미지 업로드
+            await uploadImage(trailId);
+    
+            // 초기화 및 화면 이동
             setMapImage(null);
             localStorage.removeItem("startLocation");
             localStorage.removeItem("locationCode");
@@ -443,7 +450,6 @@ const Walk = () => {
             console.error("저장 중 오류 발생:", error.response || error);
         }
     };    
-    
 
     const handleNameChange = (e) => {
         setName(e.target.value);
