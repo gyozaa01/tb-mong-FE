@@ -350,10 +350,34 @@ const Walk = () => {
         setShowSaveScreen(true); // 저장 화면으로 전환
     };
 
+    const createDefaultImage = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = CANVAS_SIZE;
+        canvas.height = CANVAS_SIZE;
+    
+        const context = canvas.getContext("2d");
+        if (context) {
+            // 흰색 배경 그리기
+            context.fillStyle = "white";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+    
+            // 기본 메시지 추가 (원할 경우)
+            context.fillStyle = "black";
+            context.font = "16px Arial";
+            context.textAlign = "center";
+            context.fillText("No Walking Path Captured", canvas.width / 2, canvas.height / 2);
+        }
+    
+        return canvas.toDataURL("image/png");
+    };
+    
     const uploadImage = async (trailId) => {
-        if (!mapImage) {
-            console.error("이미지가 존재하지 않습니다.");
-            return;
+        let imageToUpload = mapImage;
+    
+        // spotlist가 없거나 mapImage가 없는 경우 기본 이미지 생성
+        if (!polylinePath.length || !mapImage) {
+            console.warn("산책 경로가 없어서 기본 이미지를 생성합니다.");
+            imageToUpload = createDefaultImage();
         }
     
         const base64ToBlob = (base64Data) => {
@@ -368,15 +392,11 @@ const Walk = () => {
     
         try {
             // Base64 -> Blob 변환
-            const blob = base64ToBlob(mapImage);
-            console.log("Blob 생성 완료:", blob);
+            const blob = base64ToBlob(imageToUpload);
     
             // FormData 생성
             const formData = new FormData();
             formData.append("file", blob, "mapImage.png");
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}:`, value);
-            }
     
             // API 호출
             const response = await api.post(`/api/trail/${trailId}/image`, formData, {
@@ -386,9 +406,9 @@ const Walk = () => {
                 },
             });
     
-            console.log("이미지 업로드 성공:", response.status);
+            console.log("이미지 업로드 성공:", response.data);
         } catch (error) {
-            console.error("이미지 업로드 중 오류 발생:", error.response?.status, error.response?.data);
+            console.error("이미지 업로드 중 오류 발생:", error.response || error);
         }
     };    
 
