@@ -72,13 +72,19 @@ const Record = () => {
 
   const fetchTrailImage = async (trailId) => {
     try {
+      // API 호출
       const response = await api.get(`/api/trail/${trailId}/image`, {
         headers: {
           Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
         },
-        responseType: 'blob',
+        responseType: 'blob', // 이미지 데이터를 Blob으로 받음
       });
+  
+      // Blob 데이터를 URL로 변환
       const imageUrl = URL.createObjectURL(response.data);
+      console.log(`이미지 URL 생성됨: trailId=${trailId}, url=${imageUrl}`); // 디버깅용 로그
+  
+      // 상태 업데이트
       setImageUrls((prev) => ({ ...prev, [trailId]: imageUrl }));
     } catch (error) {
       console.error(`Trail 이미지 로드 실패 (trailId: ${trailId}):`, error);
@@ -150,10 +156,14 @@ const Record = () => {
   };
 
   const renderRecordDetails = () => {
+    console.log('현재 이미지 URL 상태:', imageUrls); // 디버깅용 로그
     if (filteredRecords.length > 0) {
       return filteredRecords.map((record) => (
         <RecordItem key={record.trailId}>
-          <MapImage src={imageUrls[record.trailId] || '/placeholder.png'} alt={record.name} />
+          <MapImage
+            src={imageUrls[record.trailId] || '/placeholder.png'} // 이미지가 없으면 기본 이미지 표시
+            alt={record.name}
+          />
           <RecordDetails>
             <Title>{record.name}</Title>
             <Detail>
