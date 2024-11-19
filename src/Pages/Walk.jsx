@@ -332,6 +332,9 @@ const Walk = () => {
 
         // drawPath 호출 시 await 사용
         const pathDataUrl = await drawPath(pathData);
+
+        console.log("생성된 Map Image URL:", pathDataUrl);
+
         setMapImage(pathDataUrl);
     };
 
@@ -366,10 +369,14 @@ const Walk = () => {
         try {
             // Base64 -> Blob 변환
             const blob = base64ToBlob(mapImage);
+            console.log("Blob 생성 완료:", blob);
     
             // FormData 생성
             const formData = new FormData();
             formData.append("file", blob, "mapImage.png");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
     
             // API 호출
             const response = await api.post(`/api/trail/${trailId}/image`, formData, {
@@ -379,9 +386,9 @@ const Walk = () => {
                 },
             });
     
-            console.log("이미지 업로드 성공:", response.data);
+            console.log("이미지 업로드 성공:", response.status);
         } catch (error) {
-            console.error("이미지 업로드 중 오류 발생:", error.response || error);
+            console.error("이미지 업로드 중 오류 발생:", error.response?.status, error.response?.data);
         }
     };    
 
