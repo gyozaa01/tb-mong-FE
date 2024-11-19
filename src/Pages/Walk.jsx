@@ -404,6 +404,18 @@ const Walk = () => {
 
     const handleSave = async () => {
         try {
+            const spotLists = polylinePath.map((p) => ({
+                la: p.lat || p.Ma, // 위도
+                lo: p.lng || p.La, // 경도
+            }));
+    
+            // spotLists 배열이 비어 있는지 확인
+            if (spotLists.length === 0) {
+                console.error("spotLists가 비어 있습니다. 데이터를 확인하세요.");
+                return;
+            }
+    
+            // 서버에 데이터 전송
             const response = await api.post(
                 "/api/trail/save",
                 {
@@ -413,7 +425,7 @@ const Walk = () => {
                     time: formatTime(),
                     perHour: calculateSpeed(),
                     locationCode,
-                    spotLists: polylinePath.map((p) => ({ la: p.lat, lo: p.lng })),
+                    spotLists, // 변환된 spotLists 사용
                 },
                 {
                     headers: {
