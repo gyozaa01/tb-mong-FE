@@ -72,7 +72,7 @@ const Record = () => {
     };
 
     fetchDateRecords();
-  }, [selectedDate, imageUrls]);
+  }, [selectedDate]);
 
   const fetchTrailImage = async (trailId) => {
     try {
