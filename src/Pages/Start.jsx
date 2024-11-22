@@ -93,6 +93,7 @@ const Start = () => {
         if (window.Kakao && window.Kakao.isInitialized()) {
             window.Kakao.Auth.authorize({
                 redirectUri: redirect_uri, // 카카오 로그인 성공 후 리디렉트 URI
+                isPopup: true, // 팝업 방식 활성화
                 fail: function(err) {
                     console.error('Kakao 로그인 오류:', err);
                     // 로그인 실패 시 페이지 새로고침하여 재로그인 유도
