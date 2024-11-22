@@ -81,8 +81,12 @@ const Dongne = () => {
     // 검색 기능을 사용한 목록을 가져오는 함수
     const fetchSearchResults = useCallback(async () => {
         if (!locationId) return;
+    
+        // 키워드가 비어 있으면 공백 문자열로 설정
+        const keywordToSend = searchQuery.trim() || ' '; 
+    
         try {
-            const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${searchQuery || ''}`, {
+            const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${keywordToSend}`, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
                 },
@@ -112,7 +116,7 @@ const Dongne = () => {
             console.error('검색 결과를 불러오는 중 오류 발생:', error);
         }
     }, [locationId, sortOption, searchQuery]);
-
+    
     useEffect(() => {
         fetchNeighborhoodName();
         fetchTopUser();
