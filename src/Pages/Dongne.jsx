@@ -78,12 +78,16 @@ const Dongne = () => {
         }
     }, [locationId]);
 
-    // 검색 기능을 사용한 목록을 가져오는 함수
+    const handleSortOptionChange = (e) => {
+        const selectedOption = e.target.value;
+        setSortOption(selectedOption); // 상태 업데이트
+    };
+    
     const fetchSearchResults = useCallback(async () => {
         if (!locationId) return;
     
         // 키워드가 비어 있으면 공백 문자열로 설정
-        const keywordToSend = searchQuery.trim() || ' '; 
+        const keywordToSend = searchQuery.trim() || ' ';
     
         try {
             const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${keywordToSend}`, {
@@ -118,6 +122,15 @@ const Dongne = () => {
     }, [locationId, sortOption, searchQuery]);
     
     useEffect(() => {
+        if (searchQuery || sortOption) {
+            fetchSearchResults(); // 정렬 옵션 또는 검색어 변경 시 호출
+        } else {
+            fetchWalkRecords(); // 기본 목록 가져오기
+        }
+    }, [fetchSearchResults, fetchWalkRecords, sortOption, searchQuery]);
+    
+    
+    useEffect(() => {
         fetchNeighborhoodName();
         fetchTopUser();
         if (searchQuery) {
@@ -130,10 +143,6 @@ const Dongne = () => {
     useEffect(() => {
         setFilteredRecords(walkRecords);
     }, [walkRecords]);
-
-    const handleSortOptionChange = (e) => {
-        setSortOption(e.target.value);
-    };
 
     const handleTopUserTypeChange = (e) => {
         setTopUserType(e.target.value); // topUserType 설정
