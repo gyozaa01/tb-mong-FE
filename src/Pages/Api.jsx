@@ -12,20 +12,26 @@ api.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    console.log('Request Config:', config); // 요청 디버깅
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error); // 요청 오류 처리
+  }
 );
 
+// 응답 인터셉터
 api.interceptors.response.use(
   (response) => {
-    console.log('Response:', response); // 응답 디버깅
-    return response;
+    return response; // 성공 응답 처리
   },
   (error) => {
-    console.error('Error:', error.response || error); // 에러 디버깅
-    return Promise.reject(error);
+    // 리디렉션 문제 또는 인증 실패 디버깅
+    if (error.response && error.response.status === 401) {
+      console.error('Unauthorized: 리디렉션이 필요하거나 인증 실패:', error.response);
+    } else {
+      console.error('API 요청 중 오류 발생:', error.response || error);
+    }
+    return Promise.reject(error); // 에러 전달
   }
 );
 
