@@ -12,7 +12,6 @@ api.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
-    config.headers['Origin'] = 'https://www.tb-mong.xyz';
     return config;
   },
   (error) => Promise.reject(error)
