@@ -12,9 +12,21 @@ api.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    console.log('Request Config:', config); // 요청 디버깅
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log('Response:', response); // 응답 디버깅
+    return response;
+  },
+  (error) => {
+    console.error('Error:', error.response || error); // 에러 디버깅
+    return Promise.reject(error);
+  }
 );
 
 export default api;
