@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://tb-mong.xyz', // www 제거한 기본 도메인
+  baseURL: 'https://tb-mong.xyz',
   withCredentials: true,
 });
 
@@ -14,23 +14,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    console.error('요청 오류 발생:', error);
-    return Promise.reject(error);
-  }
-);
-
-// 응답 인터셉터
-api.interceptors.response.use(
-  (response) => response, // 성공 응답 처리
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      console.error('401 에러: 인증 실패. 로그인 페이지로 이동 필요');
-    } else {
-      console.error('응답 오류 발생:', error.response || error);
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;

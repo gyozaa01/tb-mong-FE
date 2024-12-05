@@ -1,15 +1,8 @@
 {
-  "redirects": [
-    {
-      "source": "https://www.tb-mong.xyz/:path*",
-      "destination": "https://tb-mong.xyz/:path*",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://tb-mong.xyz/:path*"
+      "destination": "https://www.tb-mong.xyz/:path*"
     }
   ],
   "headers": [
