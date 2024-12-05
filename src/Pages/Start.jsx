@@ -88,7 +88,7 @@ const Start = () => {
     }, []);    
 
     const handleKakaoLogin = () => {
-        const redirect_uri = 'https://www.tb-mong.xyz/auth'; // 인증 후 리디렉트될 URI
+        const redirect_uri = 'https://tb-mong.xyz/auth'; // 인증 후 리디렉트될 URI
 
         if (window.Kakao && window.Kakao.isInitialized()) {
             window.Kakao.Auth.authorize({
@@ -98,7 +98,7 @@ const Start = () => {
                 fail: function(err) {
                     console.error('Kakao 로그인 오류:', err);
                     // 로그인 실패 시 페이지 새로고침하여 재로그인 유도
-                    window.location.replace('https://www.tb-mong.xyz/');
+                    window.location.replace('https://tb-mong.xyz/');
                 }
             });
         } else {
