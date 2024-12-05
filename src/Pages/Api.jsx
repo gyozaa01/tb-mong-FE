@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://tb-mong.xyz',
+  baseURL: 'https://www.tb-mong.xyz',
   withCredentials: true,
 });
 
@@ -12,6 +12,7 @@ api.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
+    config.headers['Origin'] = 'https://www.tb-mong.xyz';
     return config;
   },
   (error) => Promise.reject(error)
