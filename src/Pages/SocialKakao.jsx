@@ -6,7 +6,7 @@ const SocialKakao = () => {
   // 로컬과 배포 환경에 따라 redirect_uri를 설정
   const redirectUri = process.env.NODE_ENV === 'development'
     ? 'http://localhost:3000/auth' // 로컬 환경에서 사용될 URI
-    : 'https://tb-mong.xyz/auth'; // 배포 환경에서 사용될 URI
+    : 'https://www.tb-mong.xyz/auth'; // 배포 환경에서 사용될 URI
 
   // Kakao 로그인 URL 생성 (REST API 키를 client_id로 사용)
   const kakaoURL = `https://kauth.kakao.com/oauth/authorize?&response_type=code&client_id=${restApiKey}&redirect_uri=${redirectUri}`;
