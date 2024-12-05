@@ -18,9 +18,8 @@ const Auth = () => {
           params: { kakaoAccessToken },
         });
     
-        if (response.data && response.data.token) {
-          // 서버에서 JWT 토큰이 반환되는 경우 저장
-          sessionStorage.setItem('jwt_token', response.data.token); // 정확한 필드로 저장
+        if (response.data) {
+          sessionStorage.setItem('jwt_token', response.data);
           navigate('/home'); // 홈 화면으로 이동
         } else {
           console.error('JWT 토큰이 반환되지 않았습니다:', response.data);
