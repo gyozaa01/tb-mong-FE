@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://tb-mong.xyz',
+  baseURL: 'https://www.tb-mong.xyz',
   withCredentials: true,
 });
 
