@@ -41,7 +41,7 @@ const Auth = () => {
       const bodyData = new URLSearchParams({
         grant_type: 'authorization_code',
         client_id: process.env.REACT_APP_KAKAO_REST_API_KEY,
-        redirect_uri: 'https://tb-mong-fe.vercel.app/auth',
+        redirect_uri: 'https://tb-mong.xyz/auth',
         code: code,
       });
 
