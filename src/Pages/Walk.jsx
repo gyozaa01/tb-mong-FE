@@ -373,7 +373,8 @@ const Walk = () => {
         console.log("업로드할 trailId: ", trailId);
         try {
             // mapImage가 없는 경우 기본 이미지를 생성
-            let imageToUpload = mapImage || createDefaultImage();
+            const imageToUpload = mapImage || createDefaultImage();
+            console.log("업로드할 이미지 데이터 URL:", imageToUpload);
     
             // Base64 -> Blob 변환
             const base64ToBlob = (base64Data) => {
@@ -387,10 +388,12 @@ const Walk = () => {
             };
     
             const blob = base64ToBlob(imageToUpload);
+            console.log("생성된 Blob 데이터:", blob);
     
             // FormData 생성
             const formData = new FormData();
             formData.append("file", blob, "mapImage.png");
+            console.log("FormData 내용 확인:", formData.get("file"));
     
             // API 호출
             const response = await api.post(`/api/trail/${trailId}/image`, formData, {
