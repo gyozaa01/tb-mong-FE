@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from "react-router-dom";
 import styled from 'styled-components';
 import BottomNav from '../Components/BottomNav';
 import Header from '../Components/Header';
@@ -28,6 +29,7 @@ const Walk = () => {
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
     const [characterImage, setCharacterImage] = useState(null);
     const refreshButtonRef = useRef(null); // 현재 위치 버튼
+    const navigate = useNavigate();
 
     const CANVAS_SIZE = 350;
     const CANVAS_OFFSET = CANVAS_SIZE * 0.2;
@@ -465,7 +467,7 @@ const Walk = () => {
             setMapImage(null);
             localStorage.removeItem("startLocation");
             localStorage.removeItem("locationCode");
-            window.location.href = "/record";
+            navigate("/record");
         } catch (error) {
             console.error("저장 중 오류 발생:", error.response || error);
         }
