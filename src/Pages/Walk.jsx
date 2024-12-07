@@ -431,7 +431,7 @@ const Walk = () => {
     
             console.log("산책로 저장 요청 데이터:", JSON.stringify(requestData, null, 2));
     
-            // 산책로 저장 API 호출
+            // 1. 산책로 저장 API 호출
             const response = await api.post("/api/trail/save", requestData, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
@@ -449,10 +449,16 @@ const Walk = () => {
     
             console.log("산책로 저장 성공, trailId:", trailId);
     
-            // 이미지 업로드
-            await uploadImage(trailId);
+            // 2. 이미지 업로드
+            try {
+                await uploadImage(trailId);
+                console.log("이미지 업로드 성공");
+            } catch (imageError) {
+                console.error("이미지 업로드 중 오류 발생:", imageError.response || imageError);
+                console.warn("이미지 업로드 실패. 하지만 저장된 산책로로 계속 진행합니다.");
+            }
     
-            // 초기화 및 화면 이동
+            // 3. 초기화 및 화면 이동
             setMapImage(null);
             localStorage.removeItem("startLocation");
             localStorage.removeItem("locationCode");
