@@ -22,7 +22,7 @@ const Walk = () => {
     const [name, setName] = useState(''); // 산책로명을 저장하는 상태
     const previousPosition = useRef(null); // 이전 위치 저장용 ref
     const visualTimeRef = useRef(null); // 시각적으로 1초마다 시간 증가용
-    // const updateInterval = 2000; // 거리 및 위치 업데이트 간격 (2초)
+    const updateInterval = 2000; // 거리 및 위치 업데이트 간격 (2초)
     const distanceUpdateRef = useRef(null); // 주기적으로 거리 업데이트를 수행하기 위한 ref
     const watchIdRef = useRef(null); // 위치 추적을 위한 watchId 저장
     const [mapImage, setMapImage] = useState(null); // 캔버스 캡처 이미지
@@ -209,6 +209,20 @@ const Walk = () => {
                     timeout: 10000, // Timeout 값을 10초로 늘려 위치 정보를 얻기 위한 대기 시간을 증가
                 }
             );
+
+            // 일정 간격으로 Polyline 및 거리 업데이트
+            distanceUpdateRef.current = setInterval(() => {
+                if (previousPosition.current) {
+                    // 현재 위치를 기준으로 Polyline 업데이트
+                    const currentPolylinePath = polylinePath;
+                    if (currentPolylinePath.length > 1) {
+                        const polyline = new kakao.maps.Polyline({
+                            path: currentPolylinePath,
+                        });
+                        setDistance(polyline.getLength() / 1000); // Polyline 경로의 총 길이를 계산하여 km 단위로 설정
+                    }
+                }
+            }, updateInterval);
         } else {
             console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
         }
