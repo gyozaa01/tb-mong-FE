@@ -396,6 +396,11 @@ const Walk = () => {
             const formData = new FormData();
             formData.append("file", blob, "mapImage.png");
             console.log("FormData 내용 확인:", formData.get("file"));
+
+            // FormData 내용 확인
+            for (const [key, value] of formData.entries()) {
+                console.log(`FormData Entry - ${key}:`, value);
+            }
     
             // API 호출
             const response = await api.post(`/api/trail/${trailId}/image`, formData, {
