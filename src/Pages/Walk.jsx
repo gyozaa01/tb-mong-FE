@@ -406,8 +406,8 @@ const Walk = () => {
             const response = await api.post(`/api/trail/${trailId}/image`, formData, {
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem("jwt_token")}`,
-                    // "Content-Type": "multipart/form-data",
                 },
+                transformRequest: [(data) => data], // 데이터 변환을 비활성화
             });
     
             console.log("이미지 업로드 성공:", response.data);
