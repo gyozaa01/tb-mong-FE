@@ -286,6 +286,9 @@ const Walk = () => {
             return new Promise((resolve) => {
                 const startImage = new Image();
                 const endImage = new Image();
+
+                startImage.crossOrigin = "anonymous"; // crossOrigin 속성 추가
+                endImage.crossOrigin = "anonymous"; // crossOrigin 속성 추가
     
                 startImage.src = `${process.env.PUBLIC_URL}/logo.png`; // 시작 지점 이미지 경로
                 endImage.src = `${process.env.PUBLIC_URL}/flag.png`; // 끝 지점 이미지 경로
