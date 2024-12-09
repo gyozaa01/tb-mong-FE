@@ -11,6 +11,7 @@ import FollowTrail from './Pages/FollowTrail';
 import Record from './Pages/Record';
 import Dogam from './Pages/Dogam';
 import Dongne from './Pages/Dongne';
+import PrivateRoute from './Components/PrivateRoute';
 
 const App = () => {
   return (
@@ -18,15 +19,15 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Start />} />
         <Route path="/auth" element={<Auth />} />
-        <Route path="/dongne-setting" element={<DongneSetting />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/setting" element={<Setting />} />
-        <Route path="/nickname" element={<Nickname />} />
-        <Route path="/walk" element={<Walk />} /> {/* 새로운 산책 시작 */}
-        <Route path="/walk/:trailId" element={<FollowTrail />} /> {/* 저장된 산책 경로 따라가기 */}
-        <Route path="/record" element={<Record />} />
-        <Route path="/dogam" element={<Dogam />} />
-        <Route path="/dongne/:locationId" element={<Dongne />} /> {/* 동네 페이지 */}
+        <Route path="/dongne-setting" element={<PrivateRoute element={<DongneSetting />} />} />
+        <Route path="/home" element={<PrivateRoute element={<Home />} />} />
+        <Route path="/setting" element={<PrivateRoute element={<Setting />} />} />
+        <Route path="/nickname" element={<PrivateRoute element={<Nickname />} />} />
+        <Route path="/walk" element={<PrivateRoute element={<Walk />} />} />
+        <Route path="/walk/:trailId" element={<PrivateRoute element={<FollowTrail />} />} />
+        <Route path="/record" element={<PrivateRoute element={<Record />} />} />
+        <Route path="/dogam" element={<PrivateRoute element={<Dogam />} />} />
+        <Route path="/dongne/:locationId" element={<PrivateRoute element={<Dongne />} />} />
       </Routes>
     </Router>
   );
