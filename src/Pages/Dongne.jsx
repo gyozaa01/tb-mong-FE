@@ -246,7 +246,7 @@ const Dongne = () => {
                                             <img src="/heart.png" alt="Likes" /> {record.like_count}
                                         </Likes>
                                         <StartButton onClick={() => handleStartTrail(record.id)}>
-                                            <img src="/start.png" alt="Start" />
+                                            <img src="/look.png" alt="Look" />
                                         </StartButton>
                                     </RightSection>
                                 </RecordItem>
