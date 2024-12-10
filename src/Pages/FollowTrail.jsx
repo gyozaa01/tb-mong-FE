@@ -40,7 +40,7 @@ const FollowTrail = () => {
                     const container = document.getElementById("map");
                     const options = {
                         center: new kakao.maps.LatLng(trailData.spotLists[0].lo, trailData.spotLists[0].la), // 첫 번째 지점으로 중심 설정
-                        level: 7,
+                        level: 10,
                     };
                     const map = new kakao.maps.Map(container, options);
 
