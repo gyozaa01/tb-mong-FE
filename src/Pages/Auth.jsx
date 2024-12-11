@@ -16,13 +16,7 @@ const Auth = () => {
       try {
         const response = await api.get('/api/auth/kakao', {
           params: { kakaoAccessToken },
-        }
-        .then(response => {
-          console.log("API 요청 성공:", response.data);
-        })
-        .catch(error => {
-          console.error("API 요청 오류:", error.response || error);
-        }));
+        });
     
         if (response.data) {
           sessionStorage.setItem('jwt_token', response.data);
