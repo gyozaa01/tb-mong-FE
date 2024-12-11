@@ -6,7 +6,6 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // 세션 쿠키를 포함하기 위해 설정
-  timeout: 10000,
 });
 
 // const api = axios.create({

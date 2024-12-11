@@ -17,6 +17,8 @@ const Auth = () => {
         const response = await api.get('/api/auth/kakao', {
           params: { kakaoAccessToken },
         });
+
+        console.log('API 응답 데이터:', response.data);
     
         if (response.data) {
           sessionStorage.setItem('jwt_token', response.data);
