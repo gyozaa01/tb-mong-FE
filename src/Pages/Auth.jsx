@@ -44,6 +44,9 @@ const Auth = () => {
         code: code,
       });
 
+      console.log('Token URL:', tokenUrl); // 토큰 요청 URL 확인
+      console.log('Body Data:', bodyData.toString()); // 요청 데이터 확인
+
       fetch(tokenUrl, {
         method: 'POST',
         headers: {
