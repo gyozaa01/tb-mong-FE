@@ -152,7 +152,8 @@ const Walk = () => {
                             }
                         });
                         previousPosition.current = newPos; // 초기 위치 설정
-                    } else if (isTracking) { // isTracking이 true일 때만 폴리라인 업데이트
+                    } else {
+                        // Polyline 경로 업데이트 및 거리 계산
                         const polyline = new kakao.maps.Polyline({
                             path: [previousPosition.current, newPos],
                         });
@@ -162,8 +163,7 @@ const Walk = () => {
                     }
 
                     // Polyline 업데이트
-                    if (mapInstance && isTracking) {
-                        // isTracking이 true일 때만 폴리라인 그리기
+                    if (mapInstance) {
                         setPolylinePath((prevPath) => {
                             const updatedPath = [...prevPath, newPos];
                             if (!mapInstance.polyline) {
@@ -214,8 +214,8 @@ const Walk = () => {
 
             // 일정 간격으로 Polyline 및 거리 업데이트
             distanceUpdateRef.current = setInterval(() => {
-                if (previousPosition.current && isTracking) {
-                    // isTracking이 true일 때만 업데이트
+                if (previousPosition.current) {
+                    // 현재 위치를 기준으로 Polyline 업데이트
                     const currentPolylinePath = polylinePath;
                     if (currentPolylinePath.length > 1) {
                         const polyline = new kakao.maps.Polyline({
