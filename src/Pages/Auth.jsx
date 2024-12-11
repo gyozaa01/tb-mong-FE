@@ -18,31 +18,21 @@ const Auth = () => {
           params: { kakaoAccessToken },
         });
     
-        if (response.data.jwtToken) {
-          sessionStorage.setItem('jwt_token', response.data.jwtToken);
-          const isSignedUp = response.data.isSignedUp;
-    
-          if (isSignedUp) {
-            navigate('/home'); // 이미 회원가입된 사용자
-          } else {
-            navigate('/dongne-setting', { state: { kakaoAccessToken } }); // 회원가입 안 된 사용자
-          }
+        if (response.data) {
+          sessionStorage.setItem('jwt_token', response.data);
+          navigate('/home'); // 홈 화면으로 이동
         } else {
           console.error('JWT 토큰이 반환되지 않았습니다:', response.data);
         }
       } catch (err) {
         console.error('사용자 정보 확인 중 오류 발생:', err);
-    
-        // 400 상태 코드인 경우 회원가입 절차로 이동
         if (err.response && err.response.status === 400) {
           navigate('/dongne-setting', { state: { kakaoAccessToken } });
-        } else {
-          navigate('/'); // 다른 오류 발생 시 홈으로 이동
         }
       } finally {
         setIsLoading(false);
       }
-    };    
+    };
     
     if (code) {
       const tokenUrl = 'https://kauth.kakao.com/oauth/token';
