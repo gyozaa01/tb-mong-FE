@@ -213,7 +213,6 @@
       <img width="300" height="300" alt="키링" src="https://github.com/user-attachments/assets/a74e9731-d3a2-4795-b515-026efe57cb0c">
       <br><b>키링</b>
     </td>
-    <td align="center">
   </tr>
 </table>
 
