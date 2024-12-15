@@ -11,7 +11,7 @@ const ITEMS_PER_PAGE = 5; // 페이지당 항목 수
 const Dongne = () => {
     const { locationId } = useParams(); // URL에서 locationId 파라미터 가져오기
     const [neighborhoodName, setNeighborhoodName] = useState('');
-    const [sortOption, setSortOption] = useState('like');
+    const [sortOption, setSortOption] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
     const [topUser, setTopUser] = useState('');
@@ -53,7 +53,11 @@ const Dongne = () => {
     const fetchWalkRecords = useCallback(async () => {
         if (!locationId) return; // locationId가 없으면 함수 종료
         try {
-            const response = await api.get(`/api/dongne/trails?locationId=${locationId}`, {
+            const response = await api.get(`/api/dongne/trails`, {
+                params: {
+                    locationId,
+                    trailSortOption: 'ALL', // 기본 옵션을 ALL로 설정
+                },
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
                 },
@@ -61,14 +65,19 @@ const Dongne = () => {
     
             const recordsWithImages = await Promise.all(
                 response.data.map(async (record) => {
-                    const imageResponse = await api.get(`/api/trail/${record.id}/image`, {
-                        headers: {
-                            Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                        },
-                        responseType: 'blob', // 이미지 데이터를 Blob으로 받음
-                    });
-                    const imageUrl = URL.createObjectURL(imageResponse.data);
-                    return { ...record, image: imageUrl };
+                    try {
+                        const imageResponse = await api.get(`/api/trail/${record.id}/image`, {
+                            headers: {
+                                Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                            },
+                            responseType: 'blob', // 이미지 데이터를 Blob으로 받음
+                        });
+                        const imageUrl = URL.createObjectURL(imageResponse.data);
+                        return { ...record, image: imageUrl };
+                    } catch (error) {
+                        console.error(`이미지 로드 실패 (trailId: ${record.id}):`, error);
+                        return { ...record, image: '/home.png' }; // 기본 이미지로 설정
+                    }
                 })
             );
     
@@ -76,11 +85,18 @@ const Dongne = () => {
         } catch (error) {
             console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
         }
-    }, [locationId]);
+    }, [locationId]);    
 
     const handleSortOptionChange = (e) => {
         const selectedOption = e.target.value;
         setSortOption(selectedOption); // 상태 업데이트
+
+        // ALL 옵션 처리
+        if (selectedOption === 'all') {
+            fetchWalkRecords(); // 전체 데이터를 다시 가져옴
+        } else {
+            fetchSearchResults(); // 선택된 옵션에 맞는 검색 결과를 가져옴
+        }
     };
     
     const fetchSearchResults = useCallback(async () => {
@@ -203,6 +219,7 @@ const Dongne = () => {
                         </LeftDropdown>
                         <RightDropdown>
                             <StyledSelect onChange={handleSortOptionChange} value={sortOption}>
+                                <option value="all">전체</option>
                                 <option value="like">좋아요순</option>
                                 <option value="recent">최신순</option>
                                 <option value="my_likes">찜한 산책로</option>
