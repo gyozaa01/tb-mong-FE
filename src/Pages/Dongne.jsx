@@ -6,7 +6,8 @@ import api from './Api';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const WRAPPER_WIDTH = '375px';
-const ITEMS_PER_PAGE = 5;
+const ITEMS_PER_PAGE = 5; // 한 페이지에 표시할 항목 수
+const MAX_VISIBLE_PAGES = 5; // 한 번에 보여줄 최대 페이지 수
 
 const Dongne = () => {
     const { locationId } = useParams();
@@ -60,7 +61,6 @@ const Dongne = () => {
                 }
             );
 
-            // 이미지 로드 로직 추가
             const recordsWithImages = await Promise.all(
                 response.data.map(async (record) => {
                     try {
@@ -68,7 +68,7 @@ const Dongne = () => {
                             headers: {
                                 Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
                             },
-                            responseType: 'blob', // 이미지 데이터를 Blob으로 받음
+                            responseType: 'blob',
                         });
                         const imageUrl = URL.createObjectURL(imageResponse.data);
                         return { ...record, image: imageUrl };
@@ -83,7 +83,7 @@ const Dongne = () => {
         } catch (error) {
             if (error.response && error.response.status === 404) {
                 console.warn('조건에 맞는 산책로가 없습니다.');
-                setFilteredRecords([]); // 빈 배열로 초기화하여 NoRecordMessage 렌더링
+                setFilteredRecords([]);
             } else {
                 console.error('검색 결과를 불러오는 중 오류 발생:', error);
             }
@@ -138,11 +138,18 @@ const Dongne = () => {
     };
 
     const handlePageChange = (newPage) => {
+        if (newPage < 1 || newPage > totalPages) return; // 0이나 음수, 전체 페이지 수를 초과한 이동 방지
         setCurrentPage(newPage);
     };
 
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const paginatedRecords = filteredRecords.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredRecords.length / ITEMS_PER_PAGE);
+    const currentRangeStart = Math.floor((currentPage - 1) / MAX_VISIBLE_PAGES) * MAX_VISIBLE_PAGES + 1;
+    const currentRangeEnd = Math.min(currentRangeStart + MAX_VISIBLE_PAGES - 1, totalPages);
+
+    const paginatedRecords = filteredRecords.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     return (
         <Container>
@@ -219,17 +226,32 @@ const Dongne = () => {
                         )}
                     </WalkList>
 
-                    <Pagination>
-                        {Array.from({ length: Math.ceil(filteredRecords.length / ITEMS_PER_PAGE) }, (_, index) => (
-                            <PageButton
-                                key={index}
-                                active={index + 1 === currentPage}
-                                onClick={() => handlePageChange(index + 1)}
-                            >
-                                {index + 1}
-                            </PageButton>
-                        ))}
-                    </Pagination>
+                    <PaginationContainer>
+                        <PageButton
+                            disabled={currentRangeStart <= 1}
+                            onClick={() => handlePageChange(currentRangeStart - 1)}
+                        >
+                            &lt;
+                        </PageButton>
+                        {Array.from({ length: currentRangeEnd - currentRangeStart + 1 }, (_, index) => {
+                            const page = currentRangeStart + index;
+                            return (
+                                <PageButton
+                                    key={page}
+                                    active={page === currentPage}
+                                    onClick={() => handlePageChange(page)}
+                                >
+                                    {page}
+                                </PageButton>
+                            );
+                        })}
+                        <PageButton
+                            disabled={currentRangeEnd >= totalPages}
+                            onClick={() => handlePageChange(currentRangeEnd + 1)}
+                        >
+                            &gt;
+                        </PageButton>
+                    </PaginationContainer>
                 </MainSection>
 
                 <StyledBottomNav />
@@ -428,7 +450,7 @@ const NoRecordMessage = styled.p`
     color: #999;
 `;
 
-const Pagination = styled.div`
+const PaginationContainer = styled.div`
     display: flex;
     justify-content: center;
     gap: 10px;
@@ -438,9 +460,12 @@ const Pagination = styled.div`
 const PageButton = styled.div`
     padding: 5px 10px;
     font-size: 16px;
-    color: ${(props) => (props.active ? '#51B47D' : 'black')};
-    cursor: pointer;
-    font-family: 'DNFBitBitv2';
+    color: ${(props) => (props.active ? '#FFFFFF' : props.disabled ? '#CCC' : 'black')};
+    background-color: ${(props) => (props.active ? '#51B47D' : 'transparent')};
+    border: ${(props) => (props.active ? '2px solid #51B47D' : 'none')};
+    border-radius: 5px;
+    cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
+    pointer-events: ${(props) => (props.disabled ? 'none' : 'auto')};
 `;
 
 const StyledBottomNav = styled(BottomNav)`
