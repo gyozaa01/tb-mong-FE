@@ -460,12 +460,9 @@ const PaginationContainer = styled.div`
 const PageButton = styled.div`
     padding: 5px 10px;
     font-size: 16px;
-    color: ${(props) => (props.active ? '#FFFFFF' : props.disabled ? '#CCC' : 'black')};
-    background-color: ${(props) => (props.active ? '#51B47D' : 'transparent')};
-    border: ${(props) => (props.active ? '2px solid #51B47D' : 'none')};
-    border-radius: 5px;
-    cursor: ${(props) => (props.disabled ? 'not-allowed' : 'pointer')};
-    pointer-events: ${(props) => (props.disabled ? 'none' : 'auto')};
+    color: ${(props) => (props.active ? '#51B47D' : 'black')};
+    cursor: pointer;
+    font-family: 'DNFBitBitv2';
 `;
 
 const StyledBottomNav = styled(BottomNav)`
