@@ -6,27 +6,25 @@ import api from './Api';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const WRAPPER_WIDTH = '375px';
-const ITEMS_PER_PAGE = 5; // 페이지당 항목 수
+const ITEMS_PER_PAGE = 5;
 
 const Dongne = () => {
-    const { locationId } = useParams(); // URL에서 locationId 파라미터 가져오기
+    const { locationId } = useParams();
     const [neighborhoodName, setNeighborhoodName] = useState('');
     const [sortOption, setSortOption] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredRecords, setFilteredRecords] = useState([]);
     const [topUser, setTopUser] = useState('');
-    const [topUserType, setTopUserType] = useState('kmTopUser'); // 기본 값: 거리왕
-    const [walkRecords, setWalkRecords] = useState([]);
-    const [currentPage, setCurrentPage] = useState(1); // 현재 페이지 번호
+    const [topUserType, setTopUserType] = useState('kmTopUser');
+    const [currentPage, setCurrentPage] = useState(1);
     const navigate = useNavigate();
 
-    // 동네 이름을 가져오는 함수
     const fetchNeighborhoodName = useCallback(async () => {
         try {
             const response = await api.get(`/api/dongne?locationId=${locationId}`, {
                 headers: {
-                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
-                }
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                },
             });
             setNeighborhoodName(response.data.locationName);
         } catch (error) {
@@ -34,14 +32,13 @@ const Dongne = () => {
         }
     }, [locationId]);
 
-    // topUserType에 따라 1위 유저 데이터를 가져오는 함수
     const fetchTopUser = useCallback(async () => {
-        if (!locationId) return; // locationId가 없으면 함수 종료
+        if (!locationId) return;
         try {
             const response = await api.get(`/api/dongne/top-user?locationId=${locationId}`, {
                 headers: {
-                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
-                }
+                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                },
             });
             setTopUser(response.data[topUserType]);
         } catch (error) {
@@ -49,69 +46,20 @@ const Dongne = () => {
         }
     }, [locationId, topUserType]);
 
-    // 기본 목록을 가져오는 함수
-    const fetchWalkRecords = useCallback(async () => {
-        if (!locationId) return; // locationId가 없으면 함수 종료
-        try {
-            const response = await api.get(`/api/dongne/trails`, {
-                params: {
-                    locationId,
-                    trailSortOption: 'ALL', // 기본 옵션을 ALL로 설정
-                },
-                headers: {
-                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                },
-            });
-    
-            const recordsWithImages = await Promise.all(
-                response.data.map(async (record) => {
-                    try {
-                        const imageResponse = await api.get(`/api/trail/${record.id}/image`, {
-                            headers: {
-                                Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                            },
-                            responseType: 'blob', // 이미지 데이터를 Blob으로 받음
-                        });
-                        const imageUrl = URL.createObjectURL(imageResponse.data);
-                        return { ...record, image: imageUrl };
-                    } catch (error) {
-                        console.error(`이미지 로드 실패 (trailId: ${record.id}):`, error);
-                        return { ...record, image: '/home.png' }; // 기본 이미지로 설정
-                    }
-                })
-            );
-    
-            setWalkRecords(recordsWithImages);
-        } catch (error) {
-            console.error('산책로 데이터를 불러오는 중 오류 발생:', error);
-        }
-    }, [locationId]);    
-
-    const handleSortOptionChange = (e) => {
-        const selectedOption = e.target.value;
-        setSortOption(selectedOption); // 상태 업데이트
-
-        // ALL 옵션 처리
-        if (selectedOption === 'all') {
-            fetchWalkRecords(); // 전체 데이터를 다시 가져옴
-        } else {
-            fetchSearchResults(); // 선택된 옵션에 맞는 검색 결과를 가져옴
-        }
-    };
-    
     const fetchSearchResults = useCallback(async () => {
         if (!locationId) return;
-    
-        // 키워드가 비어 있으면 공백 문자열로 설정
+
         const keywordToSend = searchQuery.trim() || ' ';
-    
         try {
-            const response = await api.get(`/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${keywordToSend}`, {
-                headers: {
-                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
-                },
-            });
-    
+            const response = await api.get(
+                `/api/dongne/search?locationId=${locationId}&trailSortOption=${sortOption.toUpperCase()}&keyword=${keywordToSend}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                    },
+                }
+            );
+
             // 이미지 로드 로직 추가
             const recordsWithImages = await Promise.all(
                 response.data.map(async (record) => {
@@ -126,67 +74,60 @@ const Dongne = () => {
                         return { ...record, image: imageUrl };
                     } catch (error) {
                         console.error(`이미지 로드 실패 (trailId: ${record.id}):`, error);
-                        return { ...record, image: '/home.png' }; // 기본 이미지로 설정
+                        return { ...record, image: '/home.png' };
                     }
                 })
             );
-    
-            setFilteredRecords(recordsWithImages); // 상태 업데이트
+
+            setFilteredRecords(recordsWithImages);
         } catch (error) {
             console.error('검색 결과를 불러오는 중 오류 발생:', error);
         }
     }, [locationId, sortOption, searchQuery]);
-    
-    useEffect(() => {
-        if (searchQuery || sortOption) {
-            fetchSearchResults(); // 정렬 옵션 또는 검색어 변경 시 호출
-        } else {
-            fetchWalkRecords(); // 기본 목록 가져오기
-        }
-    }, [fetchSearchResults, fetchWalkRecords, sortOption, searchQuery]);
-    
-    
+
     useEffect(() => {
         fetchNeighborhoodName();
         fetchTopUser();
-        if (searchQuery) {
-            fetchSearchResults(); // 검색어가 있을 때 검색 결과를 가져옴
-        } else {
-            fetchWalkRecords(); // 검색어가 없을 때 기본 목록을 가져옴
-        }
-    }, [fetchNeighborhoodName, fetchWalkRecords, fetchSearchResults, fetchTopUser, searchQuery, locationId]);
+    }, [fetchNeighborhoodName, fetchTopUser]);
 
     useEffect(() => {
-        setFilteredRecords(walkRecords);
-    }, [walkRecords]);
+        fetchSearchResults();
+    }, [fetchSearchResults]);
+
+    const handleSortOptionChange = (e) => {
+        const selectedOption = e.target.value;
+        setSortOption(selectedOption);
+    };
 
     const handleTopUserTypeChange = (e) => {
-        setTopUserType(e.target.value); // topUserType 설정
+        setTopUserType(e.target.value);
     };
 
     const handleStartTrail = (trailId) => {
         navigate(`/walk/${trailId}`);
     };
 
-    // 좋아요 클릭 핸들러
     const handleLikeClick = async (trailId) => {
         try {
-            const response = await api.post(`/api/dongne/like?trailId=${trailId}`, {}, {
-                headers: {
-                    Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`
+            const response = await api.post(
+                `/api/dongne/like?trailId=${trailId}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${sessionStorage.getItem('jwt_token')}`,
+                    },
                 }
-            });
-            // 좋아요 수를 업데이트
-            setWalkRecords((prevRecords) =>
+            );
+            setFilteredRecords((prevRecords) =>
                 prevRecords.map((record) =>
                     record.id === trailId ? { ...record, like_count: response.data.like_count } : record
                 )
             );
         } catch (error) {
             if (error.response && error.response.status === 400) {
-                alert("이미 좋아요가 눌러진 산책로입니다.");
+                alert('이미 좋아요가 눌러진 산책로입니다.');
             } else {
-                console.error("좋아요 요청 중 오류 발생:", error);
+                console.error('좋아요 요청 중 오류 발생:', error);
             }
         }
     };
