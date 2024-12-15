@@ -81,7 +81,12 @@ const Dongne = () => {
 
             setFilteredRecords(recordsWithImages);
         } catch (error) {
-            console.error('검색 결과를 불러오는 중 오류 발생:', error);
+            if (error.response && error.response.status === 404) {
+                console.warn('조건에 맞는 산책로가 없습니다.');
+                setFilteredRecords([]); // 빈 배열로 초기화하여 NoRecordMessage 렌더링
+            } else {
+                console.error('검색 결과를 불러오는 중 오류 발생:', error);
+            }
         }
     }, [locationId, sortOption, searchQuery]);
 
