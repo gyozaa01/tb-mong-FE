@@ -183,7 +183,7 @@
       <br><b>1위 유저</b>
     </td>
     <td align="center">
-      <img width="300" alt="정렬" src="https://github.com/user-attachments/assets/373e28ea-9370-4182-b9dd-efcceaecd609">
+      <img width="300" alt="정렬" src="https://github.com/user-attachments/assets/e597fe2c-f8f5-4e4e-88fd-83ffff3d3df2">
       <br><b>정렬</b>
     </td>
   </tr>
